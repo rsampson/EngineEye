@@ -1,34 +1,34 @@
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiClient.h> 
+#include <DNSServer.h>
 #include <ESP8266WebServer.h>
 
+// Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
+const byte DNS_PORT = 53;
+IPAddress apIP(172, 217, 28, 1);
+DNSServer dnsServer;
+ESP8266WebServer webServer(80);
+
+#ifdef USE_THERMOCOUPLE
+// if using a thermocouple, you may want to consider using the MAX31856 module 
+// (library at https://github.com/adafruit/Adafruit_MAX31856) instead of the older max6675
 #include "max6675.h" // www.ladyada.net/learn/sensors/thermocouple
 
+// must set board to wemos d1 mini or similar in order to use these pin definitions
 #define thermoDO D6
 #define thermoCS_1 D7
 #define thermoCS_2 D4
 #define thermoCLK D8
-#define vccPin D5
 
 MAX6675 thermocouple_1(thermoCLK, thermoCS_1, thermoDO);
 MAX6675 thermocouple_2(thermoCLK, thermoCS_2, thermoDO);
+#endif
 
-/* Set these to your desired credentials. */
-const char *ssid = "engineTemp";
-const char *password = "aircooled";
 
-float tempC_1;
-float tempF_1;
-float tempC_2;
-float tempF_2;
-float voltage;
-
-ESP8266WebServer server(80);
-
-/* Go to http://192.168.4.1 in a web browser
- * connected to this access point to see it.
- */
+float tempC_1 = 100;  // put in some dummy values for test
+float tempF_1 = 200;
+float tempC_2 = 300;
+float tempF_2 = 400;
+float voltage = 500;
 
  char rootPage[] = R"=====(
 <!DOCTYPE html>
@@ -88,7 +88,7 @@ void handleRoot() {
     rootPage,
     tempC_1, tempF_1, tempC_2, tempF_2, voltage
   );
-  server.send ( 200, "text/html", temp );
+  webServer.send ( 200, "text/html", temp );
 }
 
 void setup() {
@@ -96,53 +96,45 @@ void setup() {
     delay(100);
     Serial.println();
     Serial.print("Configuring access point...");
-
    
     WiFi.disconnect(); 
     WiFi.mode(WIFI_AP);
-    /* You can remove the password parameter if you want the AP to be open. */
-    WiFi.softAP(ssid);
+    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP("engine");
+
+    // if DNSServer is started with "*" for domain name, it will reply with
+    // provided IP to all DNS request
+    dnsServer.start(DNS_PORT, "*", apIP);
 
     IPAddress myIP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
     Serial.println(myIP);
-    server.on("/", handleRoot);
-    server.begin();
-    Serial.println("HTTP server started");
     
-    pinMode(vccPin, OUTPUT); digitalWrite(vccPin, HIGH);
-
-    while (!MDNS.begin("esp8266")) {
-      Serial.print(".");
-      delay(500);
-    }
-   Serial.println("mDNS responder started");
-  
-   MDNS.addService("http", "tcp", 80);
+    // replay to all requests with same HTML
+    webServer.onNotFound(handleRoot);
+    webServer.begin();
+    
+    Serial.println("HTTP server started");
 }
 
 void loop() {
-
-   server.handleClient();
+   dnsServer.processNextRequest();
+   webServer.handleClient();
    
-   //digitalWrite(vccPin, HIGH);  // uncomment if you want blinking lights!
-   // no more than 4 reads per second
-   // delay(250);
-
+#ifdef USE_THERMOCOUPLE
    tempC_1 = thermocouple_1.readCelsius();
-   tempC_1 = (41 * tempC_1) /43;  // rescale to use type T thermocouple
-   tempF_1 = (tempC_1 * 9.0/5.0)+ 32;
-   
+   //tempC_1 = (41 * tempC_1) /43;  // fudge factor to use type T thermocouple if needed
    delay(250);
-   
    tempC_2 = thermocouple_2.readCelsius();
-   tempC_2 = (41 * tempC_2) /43;  // rescale to use type T thermocouple
-   tempF_2 = (tempC_2 * 9.0/5.0)+ 32;  
-   
-  // digitalWrite(vccPin, LOW);
+   //tempC_2 = (41 * tempC_2) /43;  // fudge factor to use type T thermocouple if needed
    delay(250);
-
-   voltage =  analogRead(A0) * .01984;
+#endif
    
-   WiFi.printDiag(Serial);
+   // do the fahrenheit conversions
+   tempF_1 = (tempC_1 * 9.0/5.0)+ 32;
+   tempF_2 = (tempC_2 * 9.0/5.0)+ 32;
+    
+   //voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
+   
+   //WiFi.printDiag(Serial);
 }
