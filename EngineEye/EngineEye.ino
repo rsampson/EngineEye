@@ -3,13 +3,17 @@
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 
+#define POWER_STROKES_PER_REVOLUTION 2  // for air cooled VW
+//#define USE_THERMOCOUPLE 1
+#define USE_DS18B20 1
+
+
 // Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
 const byte DNS_PORT = 53;
-//IPAddress apIP(172, 217, 28, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80); 
 
-byte tachoPin  = D5;       // D5 on esp8266, GPIO ?, tachometer input
+byte tachoPin  = D5;       // D5 on esp8266, GPIO 14, tachometer input
 unsigned long period;      // period between pulses
 unsigned long prev;        // previous time
 unsigned long lastDisplay; // counter for display time
@@ -22,10 +26,21 @@ inline void ICACHE_RAM_ATTR pulseISR()
   prev = micros();
 }
 
+#ifdef USE_DS18B20
+#include <OneWire.h>
+#include <DallasTemperature.h>
+// Data wire is plugged into port 2 on the Arduino
+#define ONE_WIRE_BUS D6  // gpio 12
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+//#include <DS18B20.h>
+//DS18B20 ds(12);
+#endif
+
 #ifdef USE_THERMOCOUPLE
 // if using a thermocouple, you may want to consider using the MAX31856 module 
 // (library at https://github.com/adafruit/Adafruit_MAX31856) instead of the older max6675
-#include "max6675.h" // www.ladyada.net/learn/sensors/thermocouple
+#include <max6675.h> // www.ladyada.net/learn/sensors/thermocouple
 
 // must set board to wemos d1 mini or similar in order to use these pin definitions
 #define thermoDO D6
@@ -43,7 +58,7 @@ float tempF_2 = 0;
 float voltage = 0;
 float revs = 0;
 
- char rootPage[] = R"=====(
+char rootPage[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
 <head>
@@ -58,8 +73,6 @@ float revs = 0;
             padding : 10px ;
             padding-left : 10px;
             width: auto;
-            border: 10px solid lightgrey;
-            border-radius: 20px;
             margin: 10px ;
             color: black;
          }
@@ -130,7 +143,11 @@ void setup() {
     //IPAddress myIP = WiFi.softAPIP();
     //Serial.print("AP IP address: ");
     //Serial.println(myIP);
-
+    
+#ifdef USE_DS18B20
+    // Start up the library for DS18B20
+    sensors.begin();
+#endif
     // replay to all requests with same HTML
     webServer.onNotFound(handleRoot);
     webServer.begin();
@@ -140,6 +157,10 @@ void loop() {
    // captive portal support
    dnsServer.processNextRequest();
    webServer.handleClient();
+   delay(100); // this delay is required to make the captive portal work correctly
+      
+   // reading the analog port causes the system to lock up.
+   //voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
 
 #ifdef USE_THERMOCOUPLE
    tempF_1 = thermocouple_1.readFahrenheit();
@@ -149,9 +170,13 @@ void loop() {
    tempF_2 = (41 * tempF_2) /43;  // fudge factor to use type T thermocouple if needed
    delay(250);
 #endif
-   // reading the analog port causes the system to lock up.
-   //voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
-   
+
+#ifdef USE_DS18B20
+   sensors.requestTemperatures(); // Send the command to get temperatures
+   tempF_2 = sensors.getTempFByIndex(0); // note: can't use both ds18b20 and themo 2 at same time
+   //tempF_2 = ds.getTempF();
+#endif   
+
    // tachometer processing, each 250 ms
   if( (millis() - lastDisplay) >= 250 )
   {
@@ -161,7 +186,7 @@ void loop() {
     else
       rpm = 0;
   }
-  revs = rpm;
+  revs = rpm / POWER_STROKES_PER_REVOLUTION; // clean this up
     
    //WiFi.printDiag(Serial);
  }
