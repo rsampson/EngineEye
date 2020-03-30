@@ -2,16 +2,40 @@
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
+#include <EspHtmlTemplateProcessor.h> // https://github.com/plapointe6/EspHtmlTemplateProcessor
+#include <Effortless_SPIFFS.h>        // https://github.com/thebigpotatoe/Effortless-SPIFFS
 
 #define POWER_STROKES_PER_REVOLUTION 2  // for air cooled VW
 //#define USE_THERMOCOUPLE 1
 #define USE_DS18B20 1
 
+#ifdef USE_DS18B20
+#include <OneWire.h>
+#include <DallasTemperature.h>
+// Data wire is plugged into port 2 on the Arduino
+#define ONE_WIRE_BUS D6  // gpio 12
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+#endif
+
+#ifdef USE_THERMOCOUPLE
+// if using a thermocouple, you may want to consider using the MAX31856 module 
+// (library at https://github.com/adafruit/Adafruit_MAX31856) instead of the older max6675
+#include <max6675.h> // www.ladyada.net/learn/sensors/thermocouple
+// must set board to wemos d1 mini or similar in order to use these pin definitions
+#define thermoDO D6
+#define thermoCS_1 D7
+#define thermoCS_2 D4
+#define thermoCLK D8
+MAX6675 thermocouple_1(thermoCLK, thermoCS_1, thermoDO);
+MAX6675 thermocouple_2(thermoCLK, thermoCS_2, thermoDO);
+#endif
 
 // Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 ESP8266WebServer webServer(80); 
+EspHtmlTemplateProcessor templateProcessor(&webServer); 
 
 byte tachoPin  = D5;       // D5 on esp8266, GPIO 14, tachometer input
 unsigned long period;      // period between pulses
@@ -26,103 +50,44 @@ inline void ICACHE_RAM_ATTR pulseISR()
   prev = micros();
 }
 
-#ifdef USE_DS18B20
-#include <OneWire.h>
-#include <DallasTemperature.h>
-// Data wire is plugged into port 2 on the Arduino
-#define ONE_WIRE_BUS D6  // gpio 12
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
-//#include <DS18B20.h>
-//DS18B20 ds(12);
-#endif
-
-#ifdef USE_THERMOCOUPLE
-// if using a thermocouple, you may want to consider using the MAX31856 module 
-// (library at https://github.com/adafruit/Adafruit_MAX31856) instead of the older max6675
-#include <max6675.h> // www.ladyada.net/learn/sensors/thermocouple
-
-// must set board to wemos d1 mini or similar in order to use these pin definitions
-#define thermoDO D6
-#define thermoCS_1 D7
-#define thermoCS_2 D4
-#define thermoCLK D8
-
-MAX6675 thermocouple_1(thermoCLK, thermoCS_1, thermoDO);
-MAX6675 thermocouple_2(thermoCLK, thermoCS_2, thermoDO);
-#endif
-
-
 float tempF_1 = 0;
 float tempF_2 = 0;
 float voltage = 0;
 float revs = 0;
 
-char rootPage[] PROGMEM = R"=====(
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv='refresh' content='3'/> 
-    <title>Engine Parameters</title>
-    <style>
-      body { background-color: white; 
-             font-family: Sans-Serif;  
-           }
-      h1 { 
-            font-size : 4em;
-            padding : 10px ;
-            padding-left : 10px;
-            width: auto;
-            margin: 10px ;
-            color: black;
-         }
-    </style>
-    <script type="text/javascript" >
-    
-    function hotText(elemID, level){
-          var tempelem = document.getElementById(elemID);
-          var tempnum = parseInt(tempelem.innerHTML, 10);
-
-          if (tempnum > level) {
-            tempelem.style.color = "red";
-         }
-         else {
-         tempelem.style.color = "black";  
-         }
-       }
-
-    </script>
-   </head>
-  <body>
-    <h1> <span id="temp1F">%4.1f</span> F </h1>
-    <h1> <span id="temp2F">%4.1f</span> F </h1>
-    <h1> <span id="voltage">%2.2f</span> V</h1>    
-    <h1> <span id="revs">%4.0f</span> RPM</h1>  
-    <script>
-       hotText("temp1F", 250);
-       hotText("temp2F", 250);
-       hotText("voltage", 14.5);
-       hotText("revs", 4100);
-    </script> 
-  </body>
-</html>
-)=====";
-
-
-void handleRoot() {
-
-  char temp[strlen(rootPage) + 10];
-
-  snprintf ( temp, strlen(rootPage) + 10,   // works just like printf formating, following 
-    rootPage,                      // parameters get inserted into rootpage at % markers
-    tempF_1, tempF_2, voltage, revs
-  );
-  webServer.send ( 200, "text/html", temp );
+String indexKeyProcessor(const String& key)
+{
+  if (key == "TEMP1F") return String(tempF_1);
+  else if (key == "TEMP2F") return String(tempF_2);
+  else if (key == "VOLTAGE") return String(voltage);
+  else if (key == "REVS") return String(revs);
+  
+  return "Key not found";
 }
 
+void handleRoot()
+{
+  templateProcessor.processAndSend("/index.html", indexKeyProcessor);
+}
+
+eSPIFFS fileSystem(&Serial);
+void handleStyle() 
+{
+  size_t fileSize = fileSystem.getFileSize("/style.css");
+  String fileContents;
+  fileSystem.openFromFile("/style.css", fileContents);
+  webServer.send(200, "text/css", fileContents);
+}
+
+
 void setup() {
-    //Serial.begin(115200);
-    //delay(100);
+    Serial.begin(115200);
+    delay(100);
+    
+    if(!SPIFFS.begin()){
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
+    }  
     
     // config tachometer
     pinMode(tachoPin, INPUT_PULLUP);
@@ -132,24 +97,22 @@ void setup() {
     lastDisplay = 0;
 
     WiFi.mode(WIFI_AP);
-    //WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
     WiFi.softAP("engine");
 
     // if DNSServer is started with "*" for domain name, it will reply with
     // provided IP to all DNS request
-    //dnsServer.start(DNS_PORT, "*", apIP);
-    dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-    
-    //IPAddress myIP = WiFi.softAPIP();
-    //Serial.print("AP IP address: ");
-    //Serial.println(myIP);
-    
+    // IP address will be default (192.168.4.1)
+    dnsServer.start(DNS_PORT, "*", WiFi.softAPIP()); 
+     
 #ifdef USE_DS18B20
     // Start up the library for DS18B20
     sensors.begin();
 #endif
-    // replay to all requests with same HTML
+    // replay to all requests with same HTML or load style.css file
+    webServer.on("/style.css", handleStyle);
     webServer.onNotFound(handleRoot);
+    delay(100);
+    Serial.println("Starting server");
     webServer.begin();
 }
 
@@ -159,8 +122,7 @@ void loop() {
    webServer.handleClient();
    delay(100); // this delay is required to make the captive portal work correctly
       
-   // reading the analog port causes the system to lock up.
-   //voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
+   voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
 
 #ifdef USE_THERMOCOUPLE
    tempF_1 = thermocouple_1.readFahrenheit();

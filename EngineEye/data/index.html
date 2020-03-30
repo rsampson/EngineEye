@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!--Engine Monitor HTML-->
+    <meta http-equiv='refresh' content='3'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Engine Parameters</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script type="text/javascript">
+        function hotText(elemID, level) {
+            var tempelem = document.getElementById(elemID);
+            var tempnum = parseInt(tempelem.innerHTML, 10);
+
+            if (tempnum > level) {
+                tempelem.style.color = "red";
+            } else {
+                tempelem.style.color = "black";
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="main_block">
+        <h3> <span id="temp1F">Head Temperature</span> </h3>
+        <meter id="temp1_meter" value="{{TEMP1F}}" min="0" max="500">head temp</meter>
+        <h2> <span id="temp1F">{{TEMP1F}}</span> F </h2>
+
+
+        <h3> <span id="temp1F">Oil Temperature</span> </h3>
+        <meter id="temp2_meter" value="{{TEMP2F}}" min="0" max="300">oil temp</meter>
+        <h2> <span id="temp2F">{{TEMP2F}}</span> F </h2>
+
+
+        <h3> <span id="temp1F">Generator Voltage</span> </h3>
+        <meter id="volt_meter" value="{{VOLTAGE}}" min="0" max="15">gen volts</meter>
+        <h2> <span id="voltage">{{VOLTAGE}}</span> V</h2>
+
+
+        <h3> <span id="temp1F">Revolutions / Min</span> </h3>
+        <meter id="rev_meter" value="{{REVS}}" min="0" max="6000">rpm</meter>       
+        <h2> <span id="revs">{{REVS}}</span> RPM</h2>
+    </div>
+    <script>
+        hotText("temp1F", 450);
+        hotText("temp2F", 250);
+        hotText("voltage", 14.5);
+        hotText("revs", 4100);
+    </script>
+</body>
+
+</html>
