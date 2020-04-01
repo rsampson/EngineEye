@@ -5,3 +5,7 @@
     margin: 0px auto;
     text-align: center;
 }
+
+meter {
+    width: 300px;
+}
