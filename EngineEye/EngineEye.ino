@@ -1,3 +1,5 @@
+#include <Arduino_JSON.h>
+
 // Code repository at: https://github.com/rsampson/EngineEye
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
@@ -194,8 +196,20 @@ void loop() {
     else rpm = 0;
     
     //period =0; // let ISR refresh this again
-     char buffer[10];
-      dtostrf(rpm, 5, 0, buffer);
-      webSocket.sendTXT(socketNumber, buffer);
-//    webSocket.broadcastTXT(str, sizeof(str));
+    
+     //char buffer[10];
+     // dtostrf(rpm, 5, 0, buffer);
+
+     String json = "{\"rpm\":";
+     json += rpm;
+     json += ",\"voltage\":";
+     json += voltage;
+     json += ",\"temp1\":";
+     json += tempF_1;
+     json += ",\"temp2\":";
+     json += tempF_2;     
+     json += "}";
+     Serial.println(json);
+     webSocket.broadcastTXT(json.c_str(), json.length());
+     // webSocket.sendTXT(socketNumber, buffer);
  }
