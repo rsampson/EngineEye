@@ -2,16 +2,17 @@
     background-color: white;
     font-family: Arial;
     display: inline-block;
-    margin: 0px auto;
+    margin-left: 5%;
     text-align: center;
 }
 
 meter {
-    width: 150px;
+    width: 80%;
 }
 
 .section {
+    background-color: lightgreen;
     border-style: solid;
-    border-color: gray;
-    border-radius: 10px
+    border-color: lightgreen;
+    border-radius: 5%;
 }
