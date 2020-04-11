@@ -59,44 +59,46 @@ float voltage = 0;
 float rpm = 0;
 float dwell = 0;
 
-void handleRoot()
+void handleFile(const String& file, const String& contentType)
 {
-  File file = SPIFFS.open("/index.html", "r");
-  if (webServer.streamFile(file, "text/html") != file.size()) {
-    Serial.println("Sent less data than expected!");
-  }
-  file.close();
-}
+  File f = SPIFFS.open(file, "r");
 
-void handleStyle()
-{
-  File file = SPIFFS.open("/style.css", "r");
-  if ( webServer.streamFile(file, "text/css") != file.size()) {
-    Serial.println("Sent less data than expected!");
-  }
-  file.close();
-}
-
-void handleChartStyle()
-{
-  File file = SPIFFS.open("/Chart.min.css", "r");
-  if ( webServer.streamFile(file, "text/css") != file.size()) {
-    Serial.println("Sent less data than expected!");
-  }
-  file.close();
-}
-
-void handleScript()
-{
-
-  File f = SPIFFS.open("/Chart.min.js", "r");
-
-  if (webServer.streamFile(f, "application/javascript") != f.size()) {
+  if (webServer.streamFile(f, contentType) != f.size()) {
     Serial.println("Sent less data than expected!");
   }
   f.close();
 }
 
+void handleRoot()
+{
+    handleFile("/index.html","text/html"); 
+}
+
+void handleStyle()
+{
+    handleFile("/style.css","text/css"); 
+}
+
+void handleChartStyle()
+{
+    handleFile("/Chart.min.css","text/css"); 
+}
+
+void handleScript()   // might be able to send as .gz compressed file
+{
+  handleFile("/Chart.min.js.gz","application/javascript");  
+}
+
+void getData() {  // form a json description of the data and broadcast it on a web socket
+  String json = "{\"rpm\":";
+  json += rpm;
+  json += ",\"voltage\":";
+  json += voltage;
+  json += ",\"temp2\":";
+  json += tempF_2;
+  json += "}";
+  webSocket.broadcastTXT(json.c_str(), json.length());
+}
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
   switch (type) {
@@ -114,17 +116,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.println(type);
       }
   }
-}
-
-void getData() {
-  String json = "{\"rpm\":";
-  json += rpm;
-  json += ",\"voltage\":";
-  json += voltage;
-  json += ",\"temp2\":";
-  json += tempF_2;
-  json += "}";
-  webSocket.broadcastTXT(json.c_str(), json.length());
 }
 
 void setup() {
@@ -168,7 +159,7 @@ void setup() {
       sensors.setResolution(insideThermometer, 12);
   */
   webServer.on("/Chart.min.css", handleChartStyle);
-  webServer.on("/Chart.min.js", handleScript);
+  webServer.on("/Chart.min.js.gz", handleScript);
   webServer.on("/style.css", handleStyle);
   webServer.onNotFound(handleRoot);
   webServer.begin();
