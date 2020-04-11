@@ -50,7 +50,7 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        data: [],
+                        data: [0,1,2,3,4,5],
                         label: "RPM",
                         borderColor: "#3e95cd",
                         fill: false
@@ -80,28 +80,28 @@
 </head>
 
 <body onload="javascript:init()">
-    <div class="main_block">
+    <div class="main_block" >
 
         <div class="section">
-            <h3> <span id="temp2F_title">Oil Temperature</span> </h3>
+            <!--h3> <span id="temp2F_title">Oil Temperature</span> </h3-->
             <meter id="temp2_meter" value="0" min="50" max="300">oil temp</meter>
-            <h2> <span id="temp2F">--</span> F </h2>
+            <h3> Oil <span id="temp2F">--</span> deg F </h3>
         </div><br>
 
         <div class="section">
-            <h3> <span id="voltage_title">Generator Voltage</span> </h3>
+            <!--h3> <span id="voltage_title">Generator Voltage</span> </h3-->
             <meter id="volt_meter" value="0" min="0" max="15">gen volts</meter>
-            <h2> <span id="voltage">--</span> V</h2>
+            <h3> Generator <span id="voltage">--</span> V</h3>
         </div><br>
 
-        <div>
-            <canvas id="line-chart" width="300" height="300"></canvas>
+        <div class="chart">
+            <canvas id="line-chart" width="300px" height="300px"></canvas>
         </div>
 
         <div class="section">
-            <h3> <span id="rev_title">Revolutions / Min</span> </h3>
+            <!--h3> <span id="rev_title">Revolutions / Min</span> </h3-->
             <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
-            <h2> <span id="revs">--</span> RPM</h2>
+            <h3> <span id="revs">--</span> RPM</h3>
         </div><br>
 
     </div>
