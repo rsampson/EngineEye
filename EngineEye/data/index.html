@@ -3,7 +3,6 @@
 
 <head>
     <!--Engine Monitor HTML-->
-    <!--<meta http-equiv='refresh' content='120'>-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Engine Parameters</title>
     <link rel="stylesheet" type="text/css" href="style.css">
@@ -30,12 +29,14 @@
         function removeData() {
             dataPlot.data.labels.shift();
             dataPlot.data.datasets[0].data.shift();
+            dataPlot.data.datasets[1].data.shift();
         }
 
-        function addData(label, data) {
+        function addData(label, data0, data1) {
             if (dataPlot.data.labels.length > maxDataPoints) removeData();
             dataPlot.data.labels.push(label);
-            dataPlot.data.datasets[0].data.push(data);
+            dataPlot.data.datasets[0].data.push(data0);
+            dataPlot.data.datasets[1].data.push(data1);
             dataPlot.update();
         }
 
@@ -50,11 +51,41 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        data: [0,1,2,3,4,5],
+                        data: [],
                         label: "RPM",
+                        yAxisID: 'A',
                         borderColor: "#3e95cd",
                         fill: false
+                    }, {
+                        data: [],
+                        label: "dwell",
+                        yAxisID: 'B',
+                        borderColor: "#6f3d8e",
+                        fill: false
                     }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            id: 'A',
+                            type: 'linear',
+                            position: 'left',
+                            ticks: {
+                                fontColor: "#3e95cd",
+                                max: 5000,
+                                min: 500
+                            }
+                        }, {
+                            id: 'B',
+                            type: 'linear',
+                            position: 'right',
+                            ticks: {
+                                fontColor: "#6f3d8e",
+                                max: 70,
+                                min: 30
+                            }
+                        }]
+                    }
                 }
             });
         }
@@ -70,39 +101,43 @@
 
             var today = new Date();
             var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-            addData(t, data.rpm);
+            addData(t, data.rpm, data.dwell);
 
             hotText("temp2F", 250);
             hotText("voltage", 14.5);
             hotText("revs", 4100);
         }
+
+        function closesocket() {
+            webSocket.close();
+        }
     </script>
 </head>
 
-<body onload="javascript:init()">
-    <div class="main_block" >
+<body onload="javascript:init()" onbeforeunload="return closesocket()">
+    <div class="main_block">
 
-        <div class="section">
+        <div class="section temp">
             <!--h3> <span id="temp2F_title">Oil Temperature</span> </h3-->
             <meter id="temp2_meter" value="0" min="50" max="300">oil temp</meter>
             <h3> Oil <span id="temp2F">--</span> deg F </h3>
         </div><br>
 
-        <div class="section">
-            <!--h3> <span id="voltage_title">Generator Voltage</span> </h3-->
-            <meter id="volt_meter" value="0" min="0" max="15">gen volts</meter>
-            <h3> Generator <span id="voltage">--</span> V</h3>
+        <div class="section rpm" onclick="location.href='rpm.html';">
+            <!--h3> <span id="rev_title">Revolutions / Min</span> </h3-->
+            <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
+            <h3> <span id="revs">--</span> RPM</h3>
         </div><br>
 
         <div class="chart">
             <canvas id="line-chart" width="300px" height="300px"></canvas>
         </div>
 
-        <div class="section">
-            <!--h3> <span id="rev_title">Revolutions / Min</span> </h3-->
-            <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
-            <h3> <span id="revs">--</span> RPM</h3>
-        </div><br>
+        <div class="section volt">
+            <!--h3> <span id="voltage_title">Generator Voltage</span> </h3-->
+            <meter id="volt_meter" value="0" min="0" max="15">gen volts</meter>
+            <h4> Generator <span id="voltage">--</span> V</h4>
+        </div>
 
     </div>
 </body>

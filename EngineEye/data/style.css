@@ -13,8 +13,18 @@ meter {
 
 .section {
     height: 90px;
-    background-color: lightgreen;
     border-radius: 10px;
     padding-bottom: 5px;
 }
 
+.volt {
+        background-color: lightgray;
+}
+
+.rpm {
+        background-color: lightblue;
+}
+
+.temp {
+        background-color: plum;
+}

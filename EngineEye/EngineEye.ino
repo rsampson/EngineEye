@@ -13,7 +13,9 @@
 #include <WebSocketsServer.h>
 #include <FS.h>
 #include <Ticker.h>
-#include <SimplyAtomic.h>
+#include <interrupts.h>
+#include <ArduinoSort.h> // https://github.com/emilv/ArduinoSort
+
 // sensor libraries
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -21,6 +23,7 @@
 #define POWER_STROKES_PER_REVOLUTION 2  // for air cooled 4 cy VW
 
 Ticker timer;
+
 OneWire oneWire(D6);  // sensor hooked to D6, gpio 12
 DallasTemperature sensors(&oneWire);
 // arrays to hold device address
@@ -32,32 +35,35 @@ DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-byte tachoPin  = D5;       // on esp8266, GPIO 14, tachometer input
-unsigned long period;      // period between pulses
-unsigned long prev;        // previous time
-unsigned long discharge;   // time coil is discharged
+byte tachoPin  = D5;  // on esp8266, GPIO 14, tachometer input
+
+volatile unsigned long period;      // period between pulses
+volatile unsigned long prev;        // previous time signal was low
+volatile unsigned long periodArray[17];      // period between pulses
+
 
 // tachometer isr
 inline void ICACHE_RAM_ATTR pulseISR()
 {
-  if(digitalRead(tachoPin) == HIGH) {
-    period = micros() - prev;
-    //optional filter
-    //  if (period < 5000 )  //runt interrupt or > 6000 rpm, ignore
-    //  {
-    //    return;
-    //  }
-    prev = micros();
-  } else {  // tach signal is low
-    discharge = micros() - prev;
-  }
-}
+   digitalWrite(D6, HIGH);
+   periodArray[8] = micros() - prev;
 
-// display values
-float tempF_2 = 0;
-float voltage = 0;
-float rpm = 0;
-float dwell = 0;
+   int sample = 0;
+   // make sure tach input is stable low before preceeding
+  for (int i =0; i < 100; i++)
+   {
+      if (digitalRead(tachoPin) == LOW) 
+      {
+        sample++;
+      } 
+   }
+   if(sample < 75) return;
+   prev = micros();            // filter the value by taking the middle 
+   sortArray(periodArray, 17); // value of a sorted array
+   period = periodArray[8];
+ 
+   digitalWrite(D6, LOW);
+}
 
 void handleFile(const String& file, const String& contentType)
 {
@@ -72,6 +78,11 @@ void handleFile(const String& file, const String& contentType)
 void handleRoot()
 {
     handleFile("/index.html","text/html"); 
+}
+
+void handleRPM()
+{
+    handleFile("/rpm.html","text/html"); 
 }
 
 void handleStyle()
@@ -89,13 +100,24 @@ void handleScript()   // might be able to send as .gz compressed file
   handleFile("/Chart.min.js.gz","application/javascript");  
 }
 
+// display values
+float tempF = 0;
+float voltage = 0;
+float rpm = 0;
+float dwell = 0;
+float finalrpm = 0;
+float rpm_array[16];
+
+
 void getData() {  // form a json description of the data and broadcast it on a web socket
   String json = "{\"rpm\":";
-  json += rpm;
+  json += String(finalrpm, 0);
   json += ",\"voltage\":";
-  json += voltage;
+  json += String(voltage, 1);
   json += ",\"temp2\":";
-  json += tempF_2;
+  json += String(tempF,0);
+  json += ",\"dwell\":";
+  json += String(dwell,0);
   json += "}";
   webSocket.broadcastTXT(json.c_str(), json.length());
 }
@@ -106,7 +128,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       Serial.printf("Disconnected!\n");
       break;
     case WStype_CONNECTED: {      // if a new websocket connection is established
-        timer.attach(1, getData); // start sending data on the web socket
+        timer.attach(.5, getData); // start sending data on the web socket 2 times a sec
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("Connected from %d.%d.%d.%d url: %s\n", ip[0], ip[1], ip[2], ip[3], payload);
       }
@@ -146,11 +168,6 @@ void setup() {
     return;
   }
 
-  // config tachometer
-  pinMode(tachoPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(tachoPin), pulseISR, CHANGE);
-  period = 0;
-  prev = 0;
   /*
       // Start up the library for DS18B20
       sensors.begin();
@@ -161,6 +178,7 @@ void setup() {
   webServer.on("/Chart.min.css", handleChartStyle);
   webServer.on("/Chart.min.js.gz", handleScript);
   webServer.on("/style.css", handleStyle);
+  webServer.on("/rpm.html", handleRPM);
   webServer.onNotFound(handleRoot);
   webServer.begin();
 
@@ -169,9 +187,18 @@ void setup() {
 
   Serial.println("Starting servers");
   delay(100);
+   // config tachometer
+  pinMode(D6, OUTPUT);
+  pinMode(tachoPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(tachoPin), pulseISR, FALLING);
+  period = 0;
+  prev = 0;
 }
 
 #define USEC_PER_MINUT 60000000
+
+unsigned long highCount = 0;
+unsigned long lowCount = 0;
 
 void loop() {
   dnsServer.processNextRequest(); // captive portal support
@@ -184,22 +211,42 @@ void loop() {
   voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
   /*
      sensors.requestTemperatures();
-     tempF_2 = sensors.getTempF(insideThermometer);
-     //tempF_2 = sensors.getTempFByIndex(0); // note: can't use both ds18b20 and themo 2 at same time
+     tempF = sensors.getTempF(insideThermometer);
+     //tempF = sensors.getTempFByIndex(0); // note: can't use both ds18b20 and themo 2 at same time
   */
-  if (period != 0) {
-    ATOMIC() {  // probably not needed
-      rpm = (USEC_PER_MINUT / period) / POWER_STROKES_PER_REVOLUTION; 
-      dwell = (period - discharge)  * 360;
-      dwell = dwell / (period * POWER_STROKES_PER_REVOLUTION);
-    }
+  { 
+    InterruptLock lock; 
+    if (period != 0) {
+        rpm = (USEC_PER_MINUT / period) / POWER_STROKES_PER_REVOLUTION;
+     } else {
+      rpm = 0;
+     }
+   }
+  
+   rpm_array[8] = rpm;              // filter out outliers 
+   sortArray(rpm_array, 16);
+   rpm = rpm_array[8];
+
+   finalrpm = (rpm + (3 * finalrpm)) / 4;  // do some crude averaging
+   
+   period = 0; // let ISR refresh this again
+
+   // measure dwell by statistical sampling
+  if(digitalRead(tachoPin) == HIGH) {
+    highCount++;
   } else {
-    rpm = 0;
-    dwell=0;
+    lowCount++;
   }
-  period = 0; // let ISR refresh this again
-  // allow time for refresh
-  delay(100); // this delay is required to make the web sockets work correctly
-  Serial.print(" dwell = ");
-  Serial.println(dwell);
+  // decimate counts to make measurement more responsive
+  if((highCount + lowCount) > 1000) {
+    highCount = highCount / 2;
+    lowCount = lowCount / 2;
+  }
+  dwell = (lowCount  * 180) / (highCount + lowCount);
+   
+  // allow time for refresh of tach period sampling
+  delay(random(50));
+  delay(50); // this delay is required to make the web sockets work correctly
+  //Serial.print(" dwell = ");
+  //Serial.println(dwell);
 }

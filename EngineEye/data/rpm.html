@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!--RPM Monitor HTML-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Engine Parameters</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script type="text/javascript">
+        function hotText(elemID, level) {
+            var tempelem = document.getElementById(elemID);
+            var tempnum = parseInt(tempelem.innerHTML, 10);
+
+            if (tempnum > level) {
+                tempelem.style.color = "red";
+            } else {
+                tempelem.style.color = "black";
+            }
+        }
+
+        var webSocket
+
+        function init() {
+            webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
+            webSocket.onmessage = function(event) {
+                processReceivedCommand(event);
+            };
+
+            function processReceivedCommand(evt) {
+                var data = JSON.parse(evt.data);
+                document.getElementById('revs').innerHTML = data.rpm;
+                document.getElementById('rev_meter').value = data.rpm;
+                hotText("revs", 4100);
+            }
+
+            function closesocket() {
+                webSocket.close();
+            }
+    </script>
+</head>
+
+<body onload="javascript:init()" onbeforeunload="return closesocket()">
+    <div class="main_block">
+        <div class="section rpm" onclick="location.href='index.html';">
+            <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
+            <h1> <span id="revs">--</span> RPM</h1>
+        </div>
+    </div>
+</body>
+
+</html>
