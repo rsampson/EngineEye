@@ -6,30 +6,22 @@
     text-align: center;
 }
 
-meter {
-    width: 80%;
-    height: 35%;
-    margin-top: 7%;
-}
-
 .section {
-    height: 60px;
+    height: 175px;
     border-radius: 10px;
-    padding-bottom: 40px;
+    padding-bottom: 30px;
     display: block;
     margin: auto;
     width: anything under 100% 
-    align-items: center;   
+    align-items: center;  
+    font-size: 25px;
 }
 
-
-.volt {
-    background: linear-gradient(to bottom,#dbdde5,#3a3a3b);
-    align-items: center;
-    height: 30px;
-    display: block;
-    margin: auto;
-    width: anything under 100% 
+meter {
+    width: 300px;
+    padding: 10px;
+    height: 30%;
+    margin-top: 7%;
 }
 
 .rpm {
@@ -38,5 +30,9 @@ meter {
 
 .temp {
      background: linear-gradient(to bottom,#75039f,#f5c6ee);
+}
+
+.about {
+    font-size: 10px;
 }
 

@@ -58,7 +58,7 @@
                         fill: false
                     }, {
                         data: [],
-                        label: "dwell",
+                        label: "Oil Temp",
                         yAxisID: 'B',
                         borderColor: "#6f3d8e",
                         fill: false
@@ -81,8 +81,8 @@
                             position: 'right',
                             ticks: {
                                 fontColor: "#6f3d8e",
-                                max: 70,
-                                min: 30
+                                max: 270,
+                                min: 90
                             }
                         }]
                     }
@@ -90,19 +90,28 @@
             });
         }
 
+        var count = 0;
+        
         function processReceivedCommand(evt) {
             var data = JSON.parse(evt.data);
+            // update display values
             document.getElementById('revs').innerHTML = data.rpm;
             document.getElementById('voltage').innerHTML = data.voltage;
             document.getElementById('temp2F').innerHTML = data.temp2;
             document.getElementById('rev_meter').value = data.rpm;
-            document.getElementById('volt_meter').value = data.voltage;
             document.getElementById('temp2_meter').value = data.temp2;
-
+            document.getElementById('dwell').innerHTML = data.dwell;
+            
             var today = new Date();
             var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-            addData(t, data.rpm, data.dwell);
-
+           
+            // slow down chart update
+            if( count % 10 == 0) {
+                addData(t, data.rpm, data.temp2);
+            }
+            count++;
+            
+            // turn out of range text red
             hotText("temp2F", 250);
             hotText("voltage", 14.5);
             hotText("revs", 4100);
@@ -115,28 +124,24 @@
 </head>
 
 <body onload="javascript:init()" onbeforeunload="return closesocket()">
-    <div class="main_block">
+    <div class="main_block" onclick="location.href='rpm.html';" >
 
         <div class="section temp">
-            <!--h3> <span id="temp2F_title">Oil Temperature</span> </h3-->
             <meter id="temp2_meter" value="0" min="50" max="300">oil temp</meter>
-            <h3> Oil <span id="temp2F">--</span> deg F </h3>
+            <h2> Oil <span id="temp2F">--</span> deg F </h2>
         </div><br>
 
-        <div class="section rpm" onclick="location.href='rpm.html';">
-            <!--h3> <span id="rev_title">Revolutions / Min</span> </h3-->
+        <div class="section rpm" >
             <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
-            <h3> <span id="revs">--</span> RPM</h3>
+            <h2> <span id="revs">--</span> RPM</h2>
         </div><br>
 
         <div class="chart">
             <canvas id="line-chart" width="300px" height="300px"></canvas>
         </div>
 
-        <div class="section volt">
-            <!--h3> <span id="voltage_title">Generator Voltage</span> </h3-->
-            <meter id="volt_meter" value="0" min="0" max="15">gen volts</meter>
-            <h4> Generator <span id="voltage">--</span> V</h4>
+        <div class="volt">
+            <h4> Gen <span id="voltage">--</span> V    <span id="dwell">--</span> deg dwell</h4>
         </div>
 
     </div>

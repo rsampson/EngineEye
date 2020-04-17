@@ -1,5 +1,3 @@
-
-
 // Code repository at: https://github.com/rsampson/EngineEye
 
 // chart and websockets inspired by://https://github.com/acrobotic/Ai_Demos_ESP8266
@@ -12,7 +10,7 @@
 #include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
 #include <FS.h>
-#include <Ticker.h>
+#include <Ticker.h>      // https://github.com/esp8266/Arduino/tree/master/libraries/Ticker
 #include <interrupts.h>
 #include <ArduinoSort.h> // https://github.com/emilv/ArduinoSort
 
@@ -49,10 +47,10 @@ inline void ICACHE_RAM_ATTR pulseISR()
    periodArray[8] = micros() - prev;
 
    int sample = 0;
-   // make sure tach input is stable low before preceeding
+   // make sure tach input is stable high before preceeding
   for (int i =0; i < 100; i++)
    {
-      if (digitalRead(tachoPin) == LOW) 
+      if (digitalRead(tachoPin) == HIGH) 
       {
         sample++;
       } 
@@ -90,6 +88,11 @@ void handleStyle()
     handleFile("/style.css","text/css"); 
 }
 
+void handleRpmStyle()
+{
+    handleFile("/rpmstyle.css","text/css"); 
+}
+
 void handleChartStyle()
 {
     handleFile("/Chart.min.css","text/css"); 
@@ -100,12 +103,12 @@ void handleScript()   // might be able to send as .gz compressed file
   handleFile("/Chart.min.js.gz","application/javascript");  
 }
 
-// display values
-float tempF = 0;
-float voltage = 0;
-float rpm = 0;
-float dwell = 0;
-float finalrpm = 0;
+// display values -- initialize with reasonable values
+float tempF = 70;
+float voltage = 14;
+float rpm = 900;
+float dwell = 50;
+float finalrpm = 900;
 float rpm_array[16];
 
 
@@ -125,6 +128,7 @@ void getData() {  // form a json description of the data and broadcast it on a w
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) { // When a WebSocket message is received
   switch (type) {
     case WStype_DISCONNECTED:             // if the websocket is disconnected
+      timer.detach();
       Serial.printf("Disconnected!\n");
       break;
     case WStype_CONNECTED: {      // if a new websocket connection is established
@@ -147,17 +151,8 @@ void setup() {
   //ESP.eraseConfig();
   WiFi.disconnect(true);
   //wifi_set_phy_mode(PHY_MODE_11B);  //This is supposed to add more power
-  //WiFi.mode(WIFI_AP);
   //WiFi.setOutputPower(20); // Ras hack
   WiFi.softAP("engine", "", 4); // set to ch 4, no password
-
-  //    WiFi.mode(WIFI_STA);
-  //    WiFi.begin("offline" ,"2LiveCrew");
-  //    while(WiFi.status()!=WL_CONNECTED)
-  //    {
-  //      Serial.print(".");
-  //      delay(500);
-  //    }
 
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request, IP address will be default (192.168.4.1)
@@ -171,13 +166,14 @@ void setup() {
   /*
       // Start up the library for DS18B20
       sensors.begin();
-      if (!sensors.getAddress(insideThermometer, 0)) Serial.println("Unable to find address for Device 0");
-      // set the resolution to 12 bit (Each Dallas/Maxim device is capable of several different resolutions)
+      if (!sensors.getAddress(insideThermometer, 0)) Serial.println("Unable to find thermo address");
+      // set the resolution to 12 bit 
       sensors.setResolution(insideThermometer, 12);
   */
   webServer.on("/Chart.min.css", handleChartStyle);
   webServer.on("/Chart.min.js.gz", handleScript);
   webServer.on("/style.css", handleStyle);
+  webServer.on("/rpmstyle.css", handleRpmStyle);
   webServer.on("/rpm.html", handleRPM);
   webServer.onNotFound(handleRoot);
   webServer.begin();
@@ -190,7 +186,7 @@ void setup() {
    // config tachometer
   pinMode(D6, OUTPUT);
   pinMode(tachoPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(tachoPin), pulseISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(tachoPin), pulseISR, RISING);
   period = 0;
   prev = 0;
 }
@@ -214,6 +210,7 @@ void loop() {
      tempF = sensors.getTempF(insideThermometer);
      //tempF = sensors.getTempFByIndex(0); // note: can't use both ds18b20 and themo 2 at same time
   */
+  // compute RPM
   { 
     InterruptLock lock; 
     if (period != 0) {
@@ -222,16 +219,17 @@ void loop() {
       rpm = 0;
      }
    }
-  
-   rpm_array[8] = rpm;              // filter out outliers 
-   sortArray(rpm_array, 16);
-   rpm = rpm_array[8];
 
-   finalrpm = (rpm + (3 * finalrpm)) / 4;  // do some crude averaging
-   
+   if(rpm > 500 && rpm < 5000) {      // engine can only do this
+     rpm_array[8] = rpm;              // filter out outliers 
+     sortArray(rpm_array, 16);
+     rpm = rpm_array[8];
+  
+     finalrpm = (rpm + (3 * finalrpm)) / 4;  // do some crude averaging
+   }
    period = 0; // let ISR refresh this again
 
-   // measure dwell by statistical sampling
+   // compute dwell by statistical sampling
   if(digitalRead(tachoPin) == HIGH) {
     highCount++;
   } else {
@@ -242,11 +240,10 @@ void loop() {
     highCount = highCount / 2;
     lowCount = lowCount / 2;
   }
-  dwell = (lowCount  * 180) / (highCount + lowCount);
+  dwell = (highCount  * 180) / (highCount + lowCount);
    
-  // allow time for refresh of tach period sampling
-  delay(random(50));
-  delay(50); // this delay is required to make the web sockets work correctly
+  // allow time for refresh of tach sampling, make random so not synchronous with tach signal
+  delay(random(50, 100)); //  delay also required to make the web sockets work correctly
   //Serial.print(" dwell = ");
   //Serial.println(dwell);
 }

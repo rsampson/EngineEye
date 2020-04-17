@@ -5,7 +5,7 @@
     <!--RPM Monitor HTML-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Engine Parameters</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="rpmstyle.css">
 
     <script type="text/javascript">
         function hotText(elemID, level) {
@@ -19,32 +19,40 @@
             }
         }
 
-        var webSocket
+        var webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
 
-        function init() {
-            webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
-            webSocket.onmessage = function(event) {
-                processReceivedCommand(event);
-            };
+        webSocket.onmessage = function(event) {
+            processReceivedCommand(event);
+        };
 
-            function processReceivedCommand(evt) {
-                var data = JSON.parse(evt.data);
-                document.getElementById('revs').innerHTML = data.rpm;
-                document.getElementById('rev_meter').value = data.rpm;
-                hotText("revs", 4100);
-            }
+        function processReceivedCommand(evt) {
+            var data = JSON.parse(evt.data);
+            document.getElementById('revs').innerHTML = data.rpm;
+            document.getElementById('rev_meter').value = data.rpm;
+            document.getElementById('temp2F').innerHTML = data.temp2;
+            document.getElementById('temp2_meter').value = data.temp2;
+            hotText("revs", 4100);
+            hotText("temp2F", 250);
+        }
 
-            function closesocket() {
-                webSocket.close();
-            }
+        function closesocket() {
+            webSocket.close();
+        }
     </script>
 </head>
 
-<body onload="javascript:init()" onbeforeunload="return closesocket()">
-    <div class="main_block">
-        <div class="section rpm" onclick="location.href='index.html';">
+<body onbeforeunload="return closesocket()">
+    <div class="main_block" onclick="location.href='index.html';">
+        <div class="section temp">
+            <meter id="temp2_meter" value="0" min="50" max="300">oil temp</meter>
+            <h2> Oil <span id="temp2F">--</span> deg F </h2>
+        </div><br>       
+        <div class="section rpm" >
             <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
-            <h1> <span id="revs">--</span> RPM</h1>
+            <h1> <span id="revs">--</span> rpm</h1>
+        </div>
+        <div class="about" >
+            <h4>Open source project at  https://github.com/rsampson/EngineEye</h4>
         </div>
     </div>
 </body>
