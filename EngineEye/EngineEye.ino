@@ -20,12 +20,13 @@
 
 #define POWER_STROKES_PER_REVOLUTION 2  // for air cooled 4 cy VW
 
-Ticker timer;
+Ticker timer;      // send data on websocket each tick
+Ticker tempTimer;  // read temp each tick
 
-OneWire oneWire(D6);  // sensor hooked to D6, gpio 12
+OneWire oneWire(D7);  // sensor hooked to D7, gpio 13
 DallasTemperature sensors(&oneWire);
 // arrays to hold device address
-DeviceAddress insideThermometer;
+DeviceAddress thermo;
 
 // Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
 const byte DNS_PORT = 53;
@@ -39,28 +40,27 @@ volatile unsigned long period;      // period between pulses
 volatile unsigned long prev;        // previous time signal was low
 volatile unsigned long periodArray[17];      // period between pulses
 
-
 // tachometer isr
 inline void ICACHE_RAM_ATTR pulseISR()
 {
-   digitalWrite(D6, HIGH);
-   periodArray[8] = micros() - prev;
+  digitalWrite(D6, HIGH);
+  periodArray[8] = micros() - prev;
 
-   int sample = 0;
-   // make sure tach input is stable high before preceeding
-  for (int i =0; i < 100; i++)
-   {
-      if (digitalRead(tachoPin) == HIGH) 
-      {
-        sample++;
-      } 
-   }
-   if(sample < 75) return;
-   prev = micros();            // filter the value by taking the middle 
-   sortArray(periodArray, 17); // value of a sorted array
-   period = periodArray[8];
- 
-   digitalWrite(D6, LOW);
+  int sample = 0;
+  // make sure tach input is stable high before preceeding
+  for (int i = 0; i < 100; i++)
+  {
+    if (digitalRead(tachoPin) == HIGH)
+    {
+      sample++;
+    }
+  }
+  if (sample < 75) return;
+  prev = micros();            // filter the value by taking the middle
+  sortArray(periodArray, 17); // value of a sorted array
+  period = periodArray[8];
+
+  digitalWrite(D6, LOW);
 }
 
 void handleFile(const String& file, const String& contentType)
@@ -75,32 +75,32 @@ void handleFile(const String& file, const String& contentType)
 
 void handleRoot()
 {
-    handleFile("/index.html","text/html"); 
+  handleFile("/index.html", "text/html");
 }
 
 void handleRPM()
 {
-    handleFile("/rpm.html","text/html"); 
+  handleFile("/rpm.html", "text/html");
 }
 
 void handleStyle()
 {
-    handleFile("/style.css","text/css"); 
+  handleFile("/style.css", "text/css");
 }
 
 void handleRpmStyle()
 {
-    handleFile("/rpmstyle.css","text/css"); 
+  handleFile("/rpmstyle.css", "text/css");
 }
 
 void handleChartStyle()
 {
-    handleFile("/Chart.min.css","text/css"); 
+  handleFile("/Chart.min.css", "text/css");
 }
 
 void handleScript()   // might be able to send as .gz compressed file
 {
-  handleFile("/Chart.min.js.gz","application/javascript");  
+  handleFile("/Chart.min.js.gz", "application/javascript");
 }
 
 // display values -- initialize with reasonable values
@@ -111,6 +111,10 @@ float dwell = 50;
 float finalrpm = 900;
 float rpm_array[16];
 
+void readTemp() {
+  sensors.requestTemperatures();
+  tempF = sensors.getTempF(thermo);
+}
 
 void getData() {  // form a json description of the data and broadcast it on a web socket
   String json = "{\"rpm\":";
@@ -118,9 +122,9 @@ void getData() {  // form a json description of the data and broadcast it on a w
   json += ",\"voltage\":";
   json += String(voltage, 1);
   json += ",\"temp2\":";
-  json += String(tempF,0);
+  json += String(tempF, 1);
   json += ",\"dwell\":";
-  json += String(dwell,0);
+  json += String(dwell, 0);
   json += "}";
   webSocket.broadcastTXT(json.c_str(), json.length());
 }
@@ -129,10 +133,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   switch (type) {
     case WStype_DISCONNECTED:             // if the websocket is disconnected
       timer.detach();
+      tempTimer.detach();
       Serial.printf("Disconnected!\n");
       break;
     case WStype_CONNECTED: {      // if a new websocket connection is established
-        timer.attach(.5, getData); // start sending data on the web socket 2 times a sec
+        timer.attach(.6, getData); // start sending data on the web socket 2 times a sec
+        tempTimer.attach(2, readTemp);
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("Connected from %d.%d.%d.%d url: %s\n", ip[0], ip[1], ip[2], ip[3], payload);
       }
@@ -162,14 +168,12 @@ void setup() {
     Serial.println("Error mounting SPIFFS");
     return;
   }
+  if (!sensors.getAddress(thermo, 0)) Serial.println("Unable to find address for Device 0");
+  sensors.setResolution(thermo, 10);
 
-  /*
-      // Start up the library for DS18B20
-      sensors.begin();
-      if (!sensors.getAddress(insideThermometer, 0)) Serial.println("Unable to find thermo address");
-      // set the resolution to 12 bit 
-      sensors.setResolution(insideThermometer, 12);
-  */
+  // Start up driver for DS18B20
+  //sensors.begin();
+
   webServer.on("/Chart.min.css", handleChartStyle);
   webServer.on("/Chart.min.js.gz", handleScript);
   webServer.on("/style.css", handleStyle);
@@ -183,7 +187,7 @@ void setup() {
 
   Serial.println("Starting servers");
   delay(100);
-   // config tachometer
+  // config tachometer
   pinMode(D6, OUTPUT);
   pinMode(tachoPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(tachoPin), pulseISR, RISING);
@@ -205,43 +209,39 @@ void loop() {
   yield();
 
   voltage =  analogRead(A0) * .01984;  // if analog input pin is available, can read bat voltage
-  /*
-     sensors.requestTemperatures();
-     tempF = sensors.getTempF(insideThermometer);
-     //tempF = sensors.getTempFByIndex(0); // note: can't use both ds18b20 and themo 2 at same time
-  */
+
   // compute RPM
-  { 
-    InterruptLock lock; 
+  {
+    InterruptLock lock;
     if (period != 0) {
-        rpm = (USEC_PER_MINUT / period) / POWER_STROKES_PER_REVOLUTION;
-     } else {
+      rpm = (USEC_PER_MINUT / period) / POWER_STROKES_PER_REVOLUTION;
+    } else {
       rpm = 0;
-     }
-   }
+    }
+  }
 
-   if(rpm > 500 && rpm < 5000) {      // engine can only do this
-     rpm_array[8] = rpm;              // filter out outliers 
-     sortArray(rpm_array, 16);
-     rpm = rpm_array[8];
-  
-     finalrpm = (rpm + (3 * finalrpm)) / 4;  // do some crude averaging
-   }
-   period = 0; // let ISR refresh this again
+  if (rpm > 500 && rpm < 5000) {     // engine can only do this
+    rpm_array[8] = rpm;              // filter out outliers
+    sortArray(rpm_array, 16);
+    rpm = rpm_array[8];
 
-   // compute dwell by statistical sampling
-  if(digitalRead(tachoPin) == HIGH) {
+    finalrpm = (rpm + (3 * finalrpm)) / 4;  // do some crude averaging
+  }
+  period = 0; // let ISR refresh this again
+
+  // compute dwell by statistical sampling
+  if (digitalRead(tachoPin) == HIGH) {
     highCount++;
   } else {
     lowCount++;
   }
   // decimate counts to make measurement more responsive
-  if((highCount + lowCount) > 1000) {
+  if ((highCount + lowCount) > 1000) {
     highCount = highCount / 2;
     lowCount = lowCount / 2;
   }
   dwell = (highCount  * 180) / (highCount + lowCount);
-   
+
   // allow time for refresh of tach sampling, make random so not synchronous with tach signal
   delay(random(50, 100)); //  delay also required to make the web sockets work correctly
   //Serial.print(" dwell = ");

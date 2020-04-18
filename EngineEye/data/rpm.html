@@ -44,11 +44,11 @@
 <body onbeforeunload="return closesocket()">
     <div class="main_block" onclick="location.href='index.html';">
         <div class="section temp">
-            <meter id="temp2_meter" value="0" min="50" max="300">oil temp</meter>
+            <meter id="temp2_meter" title="degrees f" value="0" min="50" low="160" optimum="200" high="235" max="300">oil temp</meter>
             <h2> Oil <span id="temp2F">--</span> deg F </h2>
         </div><br>       
         <div class="section rpm" >
-            <meter id="rev_meter" value="0" min="0" max="6000">rpm</meter>
+            <meter id="rev_meter" title="rpm" value="0" min="300" low="1200" optimum="3100" high="4000" max="5500">rpm</meter>
             <h1> <span id="revs">--</span> rpm</h1>
         </div>
         <div class="about" >
