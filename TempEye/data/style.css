@@ -1,0 +1,17 @@
+.main_block {
+    background-color: white;
+    font-family: Arial;
+    display: inline-block;
+    margin-left: 5%;
+    text-align: center;
+    border-style: solid;
+    border-color: lightgray;
+    border-radius: 10px;
+    width: 90%;
+    height: auto:
+}
+
+.gauge {
+    zoom: 0.3;
+    -moz-transform: scale(0.3);
+}

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!--Engine Temperature Monitor HTML-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Engine Parameters</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="Chart.min.css">
+    <script src="Chart.min.js.gz"></script>
+    <script src="gauge.min.js"></script>
+
+    <script type="text/javascript">
+        function hotText(elemID, level) {
+            var tempelem = document.getElementById(elemID);
+            var tempnum = parseInt(tempelem.innerHTML, 10);
+
+            if (tempnum > level) {
+                tempelem.style.color = "red";
+            } else {
+                tempelem.style.color = "black";
+            }
+        }
+
+        var webSocket, dataPlot, gauge;
+        var maxDataPoints = 20;
+
+        function removeData() {
+            dataPlot.data.labels.shift();
+            dataPlot.data.datasets[0].data.shift();
+        }
+
+        function addData(label, data0, data1) {
+            if (dataPlot.data.labels.length > maxDataPoints) removeData();
+            dataPlot.data.labels.push(label);
+            dataPlot.data.datasets[0].data.push(data0);
+            dataPlot.update();
+        }
+
+        function init() {
+            webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
+            webSocket.onmessage = function(event) {
+                processReceivedCommand(event);
+            };
+
+            dataPlot = new Chart(document.getElementById("line-chart"), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        label: "temp",
+                        yAxisID: 'A',
+                        borderColor: "#3e95cd",
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            id: 'A',
+                            type: 'linear',
+                            position: 'left',
+                            ticks: {
+                                fontColor: "#3e95cd",
+                                max: 80,
+                                min: 70
+                            }
+                        }]
+                    }
+                }
+            });
+
+            var opts = {
+                angle: 0.07, // The span of the gauge arc
+                lineWidth: 0.2, // The line thickness
+                radiusScale: .5, // Relative radius
+                pointer: {
+                    length: 0.65, // // Relative to gauge radius
+                    strokeWidth: 0.066, // The thickness
+                    color: '#000000' // Fill color
+                },
+                limitMax: false, // If false, max value increases automatically if value > maxValue
+                limitMin: false, // If true, the min value of the gauge will be fixed
+                colorStart: '#6FADCF', // Colors
+                colorStop: '#8FC0DA', // just experiment with them
+                strokeColor: '#E0E0E0', // to see which ones work best for you
+                generateGradient: true,
+                highDpiSupport: true, // High resolution support
+
+            };
+            var target = document.getElementById('temp-gauge'); // your canvas element
+            gauge = new Gauge(target).setOptions(opts); // create sexy gauge!
+            gauge.maxValue = 80; // set max gauge value
+            gauge.setMinValue(70); // Prefer setter over gauge.minValue = 0
+            gauge.animationSpeed = 100; // set animation speed (32 is default value)
+
+/*
+            gauge.percentColors = [
+                [0.0, "#a9d70b"],
+                [0.50, "#f9c802"],
+                [1.0, "#ff0000"]
+            ];
+*/
+        }
+
+        //var count;
+        
+        function processReceivedCommand(evt) {
+            var data = JSON.parse(evt.data);
+            // update display values
+            //document.getElementById('temp2F').innerHTML = data.temp2;
+            //document.getElementById('temp2_meter').value = data.temp2;
+
+            var today = new Date();
+            var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+            
+           // slow down chart update
+/*
+            if( count % 5 == 0) {
+                addData(t, data.temp2);
+            }
+            count++;
+*/
+            
+            addData(t, data.temp2);
+            gauge.set(data.temp2); 
+
+            // turn out of range text red
+            //hotText("temp2F", 250);
+        }
+
+        function closesocket() {
+            webSocket.close();
+        }
+
+    </script>
+</head>
+
+<body onload="javascript:init()" onbeforeunload="return closesocket()">
+    <div class="main_block">
+
+        <!--div class="section temp">
+            <meter id="temp2_meter" title="degrees f" value="0" min="50" low="160" optimum="200" high="235" max="300">oil temp</meter>
+            <h2> Oil <span id="temp2F">--</span> deg F </h2>
+        </div><br-->
+        
+        <div class="gauge">
+            <canvas id="temp-gauge" width="600px" height="900px"></canvas>
+        </div>
+
+        <div class="chart">
+            <canvas id="line-chart" width="300px" height="300px"></canvas>
+        </div>
+
+    </div>
+</body>
+
+</html>
