@@ -103,8 +103,9 @@ void setup() {
   Serial.begin(115200);
   delay(100);
 
+/*
   //ESP.eraseConfig();
-  WiFi.disconnect(true);
+  //WiFi.disconnect(true);
   //wifi_set_phy_mode(PHY_MODE_11B);  //This is supposed to add more power
   //WiFi.setOutputPower(20); // Ras hack
   WiFi.softAP("engine", "", 4); // set to ch 4, no password
@@ -112,7 +113,17 @@ void setup() {
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request, IP address will be default (192.168.4.1)
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+*/  
+  WiFi.begin("offline", "2LiveCrew");
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
 
+  
   if (!SPIFFS.begin()) {
     Serial.println("Error mounting SPIFFS");
     return;
@@ -132,19 +143,11 @@ void setup() {
   webSocket.begin();
 
   Serial.println("Starting servers");
-  delay(100);
 }
 
 
 void loop() {
   dnsServer.processNextRequest(); // captive portal support
-  yield();
   webServer.handleClient();
-  yield();
   webSocket.loop();
-  
-  // allow time for refresh of tach sampling, make random so not synchronous with tach signal
-  delay(random(50, 100)); //  delay also required to make the web sockets work correctly
-  //Serial.print(" dwell = ");
-  //Serial.println(dwell);
 }
