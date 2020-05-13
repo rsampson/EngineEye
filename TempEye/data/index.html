@@ -11,6 +11,25 @@
     <script src="gauge.min.js"></script>
 
     <script type="text/javascript">
+        const TOOHOT = 245;
+        const HIGHSCALE = 270;
+        const LOWSCALE = 90;
+
+        a = new AudioContext()
+
+        function beep(vol, freq, duration) { // for audible alarm
+            v = a.createOscillator()
+            u = a.createGain()
+            v.connect(u)
+            v.frequency.value = freq
+            v.type = "square"
+            u.connect(a.destination)
+            u.gain.value = vol * 0.01
+            v.start(a.currentTime)
+            v.stop(a.currentTime + duration * 0.001)
+        }
+
+
         function hotText(elemID, level) {
             var tempelem = document.getElementById(elemID);
             var tempnum = parseInt(tempelem.innerHTML, 10);
@@ -56,6 +75,9 @@
                     }]
                 },
                 options: {
+                    legend: {
+                        display: false
+                    },
                     scales: {
                         yAxes: [{
                             id: 'A',
@@ -63,8 +85,8 @@
                             position: 'left',
                             ticks: {
                                 fontColor: "#3e95cd",
-                                max: 80,
-                                min: 70
+                                max: HIGHSCALE,
+                                min: LOWSCALE
                             }
                         }]
                     }
@@ -97,9 +119,9 @@
 
             var target = document.getElementById('temp-gauge'); // your canvas element
             gauge = new Gauge(target).setOptions(opts); // create sexy gauge!
-            gauge.maxValue = 80; // set max gauge value
-            gauge.setMinValue(70); // Prefer setter over gauge.minValue = 0
-            gauge.animationSpeed = 100; // set animation speed (32 is default value)
+            gauge.maxValue = HIGHSCALE; // set max gauge value
+            gauge.setMinValue(LOWSCALE); // Prefer setter over gauge.minValue = 0
+            gauge.animationSpeed = 32; // set animation speed (32 is default value)
             gauge.setTextField(document.getElementById("textfield"));
 
 
@@ -114,16 +136,19 @@
             var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
 
             // slow down chart update
-            if (count % 5 == 0) {
-                addData(t, data.temp2);
+            if (count % 10 == 0) {
+                addData(t, data.temp2); // audible alarm if too hot
+                if (data.temp2 > TOOHOT) {
+                    beep(999, 200, 200);
+                    beep(999, 601, 200);
+                }
             }
             count++;
 
-            //addData(t, data.temp2);
             gauge.set(data.temp2);
 
             // turn out of range text red
-            //hotText("temp2F", 250);
+            hotText("textfield", TOOHOT);
         }
 
         function closesocket() {
@@ -137,8 +162,9 @@
     <div class="main_block">
 
         <div class="gauge">
-            <div class="temp-text" id="textfield" style="font-size: 80px; margin-top: 10px;">70</div>
-            <canvas id="temp-gauge" width="700px" height="400px" style="width:500px;height:300px"></canvas>
+           <h1>Oil Temperature</h1>
+            <h1><span class="temp-text" id="textfield" style="font-size: 90px; margin-top: 20px; margin-bottom: -40px">70</span> F </h1>
+            <canvas id="temp-gauge" width="700px" height="400px" style="width:500px;height:300px;align-self: center"></canvas>
         </div>
 
         <div class="chart">

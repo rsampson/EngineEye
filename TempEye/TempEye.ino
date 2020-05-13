@@ -12,32 +12,34 @@
 #include <FS.h>
 #include <Ticker.h>      // https://github.com/esp8266/Arduino/tree/master/libraries/Ticker
 
-
+#ifdef DS18B20
 // sensor libraries
 #include <OneWire.h>
 #include <DallasTemperature.h>
-
-Ticker timer;      // send data on websocket each tick
-
-OneWire oneWire(D7);  // sensor hooked to D7, gpio 13
+OneWire oneWire(2);  // sensor hooked to gpio 2, esp-01
+// OneWire oneWire(D7);  // sensor hooked to D7, gpio 13, wemos d1 mini
 DallasTemperature sensors(&oneWire);
 // arrays to hold device address
 DeviceAddress thermo;
+#endif
 
 // Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
+Ticker timer;      // send data on websocket each tick
 
-
-// tachometer isr
 void handleFile(const String& file, const String& contentType)
 {
   File f = SPIFFS.open(file, "r");
-
-  if (webServer.streamFile(f, contentType) != f.size()) {
-    Serial.println("Sent less data than expected!");
+  if (!f) {
+    Serial.println("***Error opening " + file + " ***");
+    webServer.send(200, "text/plain", "error sending " + file);
+  } else {
+    if (webServer.streamFile(f, contentType) != f.size()) {
+      Serial.println("Sent less data than expected!");
+    }
   }
   f.close();
 }
@@ -57,23 +59,30 @@ void handleChartStyle()
   handleFile("/Chart.min.css", "text/css");
 }
 
-void handleScript()  
+void handleScript()
 {
   handleFile("/Chart.min.js.gz", "application/javascript");
 }
 
-void handleGaugeScript()  
+void handleGaugeScript()
 {
   handleFile("/gauge.min.js", "application/javascript");
 }
 
 // display values -- initialize with reasonable values
 float tempF = 70;
-
+int sensorValue = 570;
 
 void getData() {  // form a json description of the data and broadcast it on a web socket
+#ifdef DS18B20
   sensors.requestTemperatures();
   tempF = sensors.getTempF(thermo);
+#else  // using a diode connected to the analog pin
+  sensorValue = analogRead(A0);
+  // map diode voltage to temperature F
+  tempF = map(sensorValue, 625, 400, 32, 212); // 32 deg was .650v
+#endif
+
   String json = "{\"temp2\":";
   json += String(tempF, 1);
   json += "}";
@@ -102,35 +111,37 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 void setup() {
   Serial.begin(115200);
   delay(100);
+  Serial.println("started");
 
-/*
   //ESP.eraseConfig();
-  //WiFi.disconnect(true);
-  //wifi_set_phy_mode(PHY_MODE_11B);  //This is supposed to add more power
-  //WiFi.setOutputPower(20); // Ras hack
   WiFi.softAP("engine", "", 4); // set to ch 4, no password
+  Serial.println("connected");
 
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request, IP address will be default (192.168.4.1)
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
-*/  
-  WiFi.begin("offline", "2LiveCrew");
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  /*
+    WiFi.begin("offline", "2LiveCrew");
 
-  
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("");
+    Serial.println("WiFi connected");
+  */
+
   if (!SPIFFS.begin()) {
     Serial.println("Error mounting SPIFFS");
     return;
   }
+  Serial.println("SPIFFS mounted");
 
+#ifdef DS18B20
   if (!sensors.getAddress(thermo, 0)) Serial.println("Unable to find address for Device 0");
   sensors.setResolution(thermo, 10);
+  Serial.println("sensor configured");
+#endif
 
   webServer.on("/gauge.min.js",  handleGaugeScript);
   webServer.on("/Chart.min.css", handleChartStyle);
