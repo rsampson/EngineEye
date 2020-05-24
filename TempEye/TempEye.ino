@@ -121,7 +121,7 @@ void setup() {
   // provided IP to all DNS request, IP address will be default (192.168.4.1)
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   /*
-    WiFi.begin("offline", "2LiveCrew");
+    WiFi.begin("ssid", "password");
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
