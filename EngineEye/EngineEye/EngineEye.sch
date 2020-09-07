@@ -1,0 +1,362 @@
+EESchema Schematic File Version 5
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Engine Temperature and RPM monitor"
+Date "2020-05-23"
+Rev "A"
+Comp "SlacTek"
+Comment1 "Use at your own risk"
+Comment2 ""
+Comment3 ""
+Comment4 ""
+Comment5 ""
+Comment6 ""
+Comment7 ""
+Comment8 ""
+Comment9 ""
+$EndDescr
+$Comp
+L ESP8266:ESP-12F U?
+U 1 1 5EC9CAC1
+P 5400 3950
+F 0 "U?" H 5400 4715 50  0000 C CNN
+F 1 "ESP-12F" H 5400 4624 50  0000 C CNN
+F 2 "" H 5400 3950 50  0001 C CNN
+F 3 "" H 5400 3950 50  0001 C CNN
+	1    5400 3950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Timer:NE555P U?
+U 1 1 5EC9D7A3
+P 3400 4050
+F 0 "U?" H 3400 4631 50  0000 C CNN
+F 1 "NE555P" H 3400 4540 50  0000 C CNN
+F 2 "Package_DIP:DIP-8_W7.62mm" H 4050 3650 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/ne555.pdf" H 4250 3650 50  0001 C CNN
+	1    3400 4050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3900 4050 4500 4050
+$Comp
+L Device:R R?
+U 1 1 5EC9DF61
+P 1450 3850
+F 0 "R?" V 1243 3850 50  0000 C CNN
+F 1 "R" V 1334 3850 50  0000 C CNN
+F 2 "" V 1380 3850 50  0001 C CNN
+F 3 "~" H 1450 3850 50  0001 C CNN
+	1    1450 3850
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:D_Zener D?
+U 1 1 5EC9ECC8
+P 1750 4150
+F 0 "D?" V 1704 4230 50  0000 L CNN
+F 1 "D_Zener" V 1795 4230 50  0000 L CNN
+F 2 "" H 1750 4150 50  0001 C CNN
+F 3 "~" H 1750 4150 50  0001 C CNN
+	1    1750 4150
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:C C?
+U 1 1 5EC9F7A3
+P 2100 4150
+F 0 "C?" H 2215 4196 50  0000 L CNN
+F 1 "C" H 2215 4105 50  0000 L CNN
+F 2 "" H 2138 4000 50  0001 C CNN
+F 3 "~" H 2100 4150 50  0001 C CNN
+	1    2100 4150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C?
+U 1 1 5EC9FD81
+P 2450 3850
+F 0 "C?" V 2198 3850 50  0000 C CNN
+F 1 "C" V 2289 3850 50  0000 C CNN
+F 2 "" H 2488 3700 50  0001 C CNN
+F 3 "~" H 2450 3850 50  0001 C CNN
+	1    2450 3850
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5ECA02CD
+P 1750 4550
+F 0 "#PWR?" H 1750 4300 50  0001 C CNN
+F 1 "GND" H 1755 4377 50  0000 C CNN
+F 2 "" H 1750 4550 50  0001 C CNN
+F 3 "" H 1750 4550 50  0001 C CNN
+	1    1750 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5ECA0A63
+P 2100 4550
+F 0 "#PWR?" H 2100 4300 50  0001 C CNN
+F 1 "GND" H 2105 4377 50  0000 C CNN
+F 2 "" H 2100 4550 50  0001 C CNN
+F 3 "" H 2100 4550 50  0001 C CNN
+	1    2100 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x02 J?
+U 1 1 5ECA200B
+P 950 3950
+F 0 "J?" H 868 3625 50  0000 C CNN
+F 1 "Screw_Terminal_01x02" H 868 3716 50  0000 C CNN
+F 2 "" H 950 3950 50  0001 C CNN
+F 3 "~" H 950 3950 50  0001 C CNN
+	1    950  3950
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5ECA3412
+P 1150 4550
+F 0 "#PWR?" H 1150 4300 50  0001 C CNN
+F 1 "GND" H 1155 4377 50  0000 C CNN
+F 2 "" H 1150 4550 50  0001 C CNN
+F 3 "" H 1150 4550 50  0001 C CNN
+	1    1150 4550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1150 3950 1150 4550
+Wire Wire Line
+	1150 3850 1300 3850
+Wire Wire Line
+	1600 3850 1750 3850
+Wire Wire Line
+	1750 4300 1750 4550
+Wire Wire Line
+	2100 4300 2100 4550
+Wire Wire Line
+	1750 4000 1750 3850
+Connection ~ 1750 3850
+Wire Wire Line
+	1750 3850 2100 3850
+Wire Wire Line
+	2100 4000 2100 3850
+Connection ~ 2100 3850
+Wire Wire Line
+	2100 3850 2300 3850
+Wire Wire Line
+	2600 3850 2650 3850
+Wire Wire Line
+	3900 4250 3900 4800
+Wire Wire Line
+	3900 4800 2650 4800
+Wire Wire Line
+	2650 4800 2650 3850
+Connection ~ 2650 3850
+Wire Wire Line
+	2650 3850 2900 3850
+$Comp
+L power:GND #PWR?
+U 1 1 5ECA4885
+P 3400 4650
+F 0 "#PWR?" H 3400 4400 50  0001 C CNN
+F 1 "GND" H 3405 4477 50  0000 C CNN
+F 2 "" H 3400 4650 50  0001 C CNN
+F 3 "" H 3400 4650 50  0001 C CNN
+	1    3400 4650
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3400 4450 3400 4650
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5ECA508F
+P 3400 3400
+F 0 "#PWR?" H 3400 3250 50  0001 C CNN
+F 1 "+3.3V" H 3415 3573 50  0000 C CNN
+F 2 "" H 3400 3400 50  0001 C CNN
+F 3 "" H 3400 3400 50  0001 C CNN
+	1    3400 3400
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5ECA58E8
+P 2750 4150
+F 0 "#PWR?" H 2750 4000 50  0001 C CNN
+F 1 "+3.3V" H 2765 4323 50  0000 C CNN
+F 2 "" H 2750 4150 50  0001 C CNN
+F 3 "" H 2750 4150 50  0001 C CNN
+	1    2750 4150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2750 4150 2750 4250
+Wire Wire Line
+	2750 4250 2900 4250
+Wire Wire Line
+	3400 3400 3400 3650
+$Comp
+L Device:R R?
+U 1 1 5ECA6463
+P 6900 3900
+F 0 "R?" H 6970 3946 50  0000 L CNN
+F 1 "R" H 6970 3855 50  0000 L CNN
+F 2 "" V 6830 3900 50  0001 C CNN
+F 3 "~" H 6900 3900 50  0001 C CNN
+	1    6900 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5ECA6C6E
+P 7200 4050
+F 0 "R?" H 7270 4096 50  0000 L CNN
+F 1 "R" H 7270 4005 50  0000 L CNN
+F 2 "" V 7130 4050 50  0001 C CNN
+F 3 "~" H 7200 4050 50  0001 C CNN
+	1    7200 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R?
+U 1 1 5ECA741A
+P 4150 2950
+F 0 "R?" H 4220 2996 50  0000 L CNN
+F 1 "R" H 4220 2905 50  0000 L CNN
+F 2 "" V 4080 2950 50  0001 C CNN
+F 3 "~" H 4150 2950 50  0001 C CNN
+	1    4150 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C?
+U 1 1 5ECA818E
+P 4150 3400
+F 0 "C?" H 4265 3446 50  0000 L CNN
+F 1 "C" H 4265 3355 50  0000 L CNN
+F 2 "" H 4188 3250 50  0001 C CNN
+F 3 "~" H 4150 3400 50  0001 C CNN
+	1    4150 3400
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5ECAA227
+P 4150 3750
+F 0 "#PWR?" H 4150 3500 50  0001 C CNN
+F 1 "GND" H 4155 3577 50  0000 C CNN
+F 2 "" H 4150 3750 50  0001 C CNN
+F 3 "" H 4150 3750 50  0001 C CNN
+	1    4150 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5ECAB561
+P 4150 2550
+F 0 "#PWR?" H 4150 2400 50  0001 C CNN
+F 1 "+3.3V" H 4165 2723 50  0000 C CNN
+F 2 "" H 4150 2550 50  0001 C CNN
+F 3 "" H 4150 2550 50  0001 C CNN
+	1    4150 2550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4150 3100 4150 3150
+Wire Wire Line
+	4150 3550 4150 3750
+Wire Wire Line
+	4150 2550 4150 2800
+Wire Wire Line
+	4500 3850 4400 3850
+Wire Wire Line
+	4400 3850 4400 3650
+Wire Wire Line
+	4400 3150 4150 3150
+Connection ~ 4150 3150
+Wire Wire Line
+	4150 3150 4150 3250
+Wire Wire Line
+	4500 3650 4400 3650
+Connection ~ 4400 3650
+Wire Wire Line
+	4400 3650 4400 3150
+$Comp
+L Connector:Conn_01x02_Male J?
+U 1 1 5ECB09F7
+P 4750 3250
+F 0 "J?" H 4722 3132 50  0000 R CNN
+F 1 "Conn_01x02_Male" H 4722 3223 50  0000 R CNN
+F 2 "" H 4750 3250 50  0001 C CNN
+F 3 "~" H 4750 3250 50  0001 C CNN
+	1    4750 3250
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5ECB14F2
+P 4550 3350
+F 0 "#PWR?" H 4550 3100 50  0001 C CNN
+F 1 "GND" H 4555 3177 50  0000 C CNN
+F 2 "" H 4550 3350 50  0001 C CNN
+F 3 "" H 4550 3350 50  0001 C CNN
+	1    4550 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4400 3150 4550 3150
+Connection ~ 4400 3150
+Wire Wire Line
+	4550 3350 4550 3250
+$Comp
+L Regulator_Linear:LM317L_SO8 U?
+U 1 1 5ECB9D79
+P 8500 3800
+F 0 "U?" H 8500 4042 50  0000 C CNN
+F 1 "LM317L_SO8" H 8500 3951 50  0000 C CNN
+F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 8500 4000 50  0001 C CIN
+F 3 "http://www.ti.com/lit/ds/snvs775k/snvs775k.pdf" H 8500 3600 50  0001 C CNN
+	1    8500 3800
+	1    0    0    -1  
+$EndComp
+$Comp
+L pspice:DIODE D?
+U 1 1 5ECBA94F
+P 9650 3800
+F 0 "D?" H 9650 3535 50  0000 C CNN
+F 1 "DIODE" H 9650 3626 50  0000 C CNN
+F 2 "" H 9650 3800 50  0001 C CNN
+F 3 "~" H 9650 3800 50  0001 C CNN
+	1    9650 3800
+	-1   0    0    1   
+$EndComp
+$Comp
+L Diode:1.5KExxCA D?
+U 1 1 5ECBC14A
+P 10150 4100
+F 0 "D?" V 10104 4180 50  0000 L CNN
+F 1 "1.5KExxCA" V 10195 4180 50  0000 L CNN
+F 2 "Diode_THT:D_DO-201AE_P15.24mm_Horizontal" H 10150 3900 50  0001 C CNN
+F 3 "https://www.vishay.com/docs/88301/15ke.pdf" H 10150 4100 50  0001 C CNN
+	1    10150 4100
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x02 J?
+U 1 1 5ECBCE99
+P 10750 3800
+F 0 "J?" H 10830 3792 50  0000 L CNN
+F 1 "Screw_Terminal_01x02" H 10830 3701 50  0000 L CNN
+F 2 "" H 10750 3800 50  0001 C CNN
+F 3 "~" H 10750 3800 50  0001 C CNN
+	1    10750 3800
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
