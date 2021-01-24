@@ -1,68 +1,20 @@
 .main_block {
     background-color: white;
     font-family: Arial;
-    display: inline-block;
     margin-left: 5%;
-    text-align: center;
-    border-style: solid;
-    border-color: lightgray;
-    border-radius: 10px;
-    width: 90%;
-    height: auto:
 }
 
-/*
-@media screen and (min-width: 413px) {
-    .section {
-        height: 5em;
-        border-radius: 10px;
-        padding-bottom: 40px; 
-        display: block;
-        margin: auto;
-        width: auto;
-        align-items: center;
-    }
-
-    meter {
-        width: 80%;
-        height: 35%;
-        margin-top: 7%;
-    }
-
-}
-*/
-@media screen and (max-width: 2000px) {
-    .section {
-        height: 5em;
-        border-radius: 10px;
-        padding-bottom: 40px;
-        display: block;
-        margin: auto;
-        width: auto;
-        align-items: center;
-    }
-
-    meter {
-        width: 80%;
-        height: 35%;
-        margin-top: 7%;
-    }
-
+.grid-container {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: max-content;
+  padding: 10px;
 }
 
-.volt {
-    background-color: lightgray;
-    align-items: center;
-    height: 30px;
-    display: block;
-    margin: auto;
-    width: anything under 100%
-}
-
-.rpm {
-    background: linear-gradient(to bottom, #02278b, #b3cff5);
-}
-
-.temp {
-    background: linear-gradient(to bottom, #75039f, #f5c6ee);
+.grid-item {
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  padding: 20px;
+  font-size: 30px;
+  text-align: center;
 }

@@ -3,13 +3,14 @@
 
 <head>
     <!--Engine Temperature Monitor HTML-->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engine Parameters</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet" type="text/css" href="Chart.min.css">
     <script src="Chart.min.js.gz"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>-->
     <script src="gauge.min.js"></script>
-
+    
     <script type="text/javascript">
         const TOOHOT = 245;
         const HIGHSCALE = 270;
@@ -61,7 +62,7 @@
             webSocket.onmessage = function(event) {
                 processReceivedCommand(event);
             };
-
+            // Chart from: https://github.com/chartjs/Chart.js
             dataPlot = new Chart(document.getElementById("line-chart"), {
                 type: 'line',
                 data: {
@@ -75,6 +76,8 @@
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     legend: {
                         display: false
                     },
@@ -117,6 +120,7 @@
                 ]
             };
 
+            // Gauge from: https://bernii.github.io/gauge.js/
             var target = document.getElementById('temp-gauge'); // your canvas element
             gauge = new Gauge(target).setOptions(opts); // create sexy gauge!
             gauge.maxValue = HIGHSCALE; // set max gauge value
@@ -124,7 +128,7 @@
             gauge.animationSpeed = 32; // set animation speed (32 is default value)
             gauge.setTextField(document.getElementById("textfield"));
 
-
+            gauge.set(70); // for test, show something in gauge
         }
 
         var count = 0;
@@ -159,18 +163,19 @@
 </head>
 
 <body onload="javascript:init()" onbeforeunload="return closesocket()">
-    <div class="main_block">
+    <div class="main_block grid-container">
 
-        <div class="gauge">
-           <h1>Oil Temperature</h1>
-            <h1><span class="temp-text" id="textfield" style="font-size: 90px; margin-top: 20px; margin-bottom: -40px">70</span> F </h1>
-            <canvas id="temp-gauge" width="700px" height="400px" style="width:500px;height:300px;align-self: center"></canvas>
+        <div class="gauge grid-item">
+           <h1>Oil Temp</h1>
+           <h1><span class="temp-text" id="textfield" >70</span> F </h1>
+           <canvas id="temp-gauge" width="auto" height="auto"></canvas>
         </div>
 
-        <div class="chart">
-            <canvas id="line-chart" width="300px" height="250px"></canvas>
+        <div class="chart grid-item">
+            <canvas id="line-chart" width="auto" height="300px"></canvas>
         </div>
 
+    </div>
     </div>
 </body>
 

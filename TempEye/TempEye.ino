@@ -12,15 +12,14 @@
 #include <FS.h>
 #include <Ticker.h>      // https://github.com/esp8266/Arduino/tree/master/libraries/Ticker
 
+#define DS18B20
 #ifdef DS18B20
 // sensor libraries
 #include <OneWire.h>
 #include <DallasTemperature.h>
-OneWire oneWire(2);  // sensor hooked to gpio 2, esp-01
-// OneWire oneWire(D7);  // sensor hooked to D7, gpio 13, wemos d1 mini
+// OneWire oneWire(2);  // sensor hooked to gpio 2, esp-01
+OneWire oneWire(D7);  // sensor hooked to D7, gpio 13, wemos d1 mini
 DallasTemperature sensors(&oneWire);
-// arrays to hold device address
-DeviceAddress thermo;
 #endif
 
 // Captive portal code from: https://github.com/esp8266/Arduino/blob/master/libraries/DNSServer/examples/CaptivePortal/CaptivePortal.ino
@@ -75,8 +74,7 @@ int sensorValue = 570;
 
 void getData() {  // form a json description of the data and broadcast it on a web socket
 #ifdef DS18B20
-  sensors.requestTemperatures();
-  tempF = sensors.getTempF(thermo);
+  tempF = sensors.getTempFByIndex(0);
 #else  // using a diode connected to the analog pin
   sensorValue = analogRead(A0);
   // map diode voltage to temperature F
@@ -138,8 +136,7 @@ void setup() {
   Serial.println("SPIFFS mounted");
 
 #ifdef DS18B20
-  if (!sensors.getAddress(thermo, 0)) Serial.println("Unable to find address for Device 0");
-  sensors.setResolution(thermo, 10);
+  sensors.begin();
   Serial.println("sensor configured");
 #endif
 
@@ -160,5 +157,6 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest(); // captive portal support
   webServer.handleClient();
+  sensors.requestTemperatures();
   webSocket.loop();
 }

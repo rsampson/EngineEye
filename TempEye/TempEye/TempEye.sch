@@ -1,0 +1,357 @@
+EESchema Schematic File Version 5
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "TempEye oil temperature monitor"
+Date "2020-05-02"
+Rev ""
+Comp "SlacTec"
+Comment1 "It might work, it might catch fire"
+Comment2 ""
+Comment3 ""
+Comment4 ""
+Comment5 ""
+Comment6 ""
+Comment7 ""
+Comment8 ""
+Comment9 ""
+$EndDescr
+$Comp
+L ESP8266:ESP-01v090 U2
+U 1 1 5EADD964
+P 4250 3850
+F 0 "U2" H 4250 3335 50  0000 C CNN
+F 1 "ESP-01v090" H 4250 3426 50  0000 C CNN
+F 2 "" H 4250 3850 50  0001 C CNN
+F 3 "http://l0l.org.uk/2014/12/esp8266-modules-hardware-guide-gotta-catch-em-all/" H 4250 3850 50  0001 C CNN
+	1    4250 3850
+	-1   0    0    1   
+$EndComp
+$Comp
+L Regulator_Linear:LM317_3PinPackage U3
+U 1 1 5EADE447
+P 6950 3700
+F 0 "U3" H 6950 3942 50  0000 C CNN
+F 1 "LM317_3PinPackage" H 6950 3851 50  0000 C CNN
+F 2 "" H 6950 3950 50  0001 C CIN
+F 3 "http://www.ti.com/lit/ds/symlink/lm317.pdf" H 6950 3700 50  0001 C CNN
+	1    6950 3700
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Sensor_Temperature:DS18B20 U1
+U 1 1 5EADF396
+P 2150 3900
+F 0 "U1" H 1920 3946 50  0000 R CNN
+F 1 "DS18B20" H 1920 3855 50  0000 R CNN
+F 2 "Package_TO_SOT_THT:TO-92_Inline" H 1150 3650 50  0001 C CNN
+F 3 "http://datasheets.maximintegrated.com/en/ds/DS18B20.pdf" H 2000 4150 50  0001 C CNN
+	1    2150 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR01
+U 1 1 5EAE3F8E
+P 2150 4400
+F 0 "#PWR01" H 2150 4150 50  0001 C CNN
+F 1 "GND" H 2155 4227 50  0000 C CNN
+F 2 "" H 2150 4400 50  0001 C CNN
+F 3 "" H 2150 4400 50  0001 C CNN
+	1    2150 4400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2150 4200 2150 4400
+Wire Wire Line
+	2450 3900 2600 3900
+Wire Wire Line
+	2150 3250 2150 3600
+$Comp
+L Device:R R1
+U 1 1 5EAEE0B7
+P 2600 3600
+F 0 "R1" H 2670 3646 50  0000 L CNN
+F 1 "4.7k" H 2670 3555 50  0000 L CNN
+F 2 "" V 2530 3600 50  0001 C CNN
+F 3 "~" H 2600 3600 50  0001 C CNN
+	1    2600 3600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2600 3750 2600 3900
+Connection ~ 2600 3900
+Wire Wire Line
+	2600 3900 3300 3900
+$Comp
+L power:GND #PWR02
+U 1 1 5EAEEE48
+P 3300 4400
+F 0 "#PWR02" H 3300 4150 50  0001 C CNN
+F 1 "GND" H 3305 4227 50  0000 C CNN
+F 2 "" H 3300 4400 50  0001 C CNN
+F 3 "" H 3300 4400 50  0001 C CNN
+	1    3300 4400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3300 4000 3300 4400
+Wire Wire Line
+	6650 3700 6500 3700
+$Comp
+L Device:D D1
+U 1 1 5EAF044F
+P 7700 3700
+F 0 "D1" H 7700 3917 50  0000 C CNN
+F 1 "1n4001" H 7700 3826 50  0000 C CNN
+F 2 "" H 7700 3700 50  0001 C CNN
+F 3 "~" H 7700 3700 50  0001 C CNN
+	1    7700 3700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7550 3700 7450 3700
+$Comp
+L Device:CP C2
+U 1 1 5EAF0F1E
+P 6150 4050
+F 0 "C2" H 6268 4096 50  0000 L CNN
+F 1 "1uf" H 6268 4005 50  0000 L CNN
+F 2 "" H 6188 3900 50  0001 C CNN
+F 3 "~" H 6150 4050 50  0001 C CNN
+	1    6150 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:CP C3
+U 1 1 5EAF197E
+P 7450 4050
+F 0 "C3" H 7568 4096 50  0000 L CNN
+F 1 "1uf" H 7568 4005 50  0000 L CNN
+F 2 "" H 7488 3900 50  0001 C CNN
+F 3 "~" H 7450 4050 50  0001 C CNN
+	1    7450 4050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7450 3900 7450 3700
+Connection ~ 7450 3700
+Wire Wire Line
+	7450 3700 7250 3700
+$Comp
+L power:GND #PWR04
+U 1 1 5EAF27AE
+P 6150 4350
+F 0 "#PWR04" H 6150 4100 50  0001 C CNN
+F 1 "GND" H 6155 4177 50  0000 C CNN
+F 2 "" H 6150 4350 50  0001 C CNN
+F 3 "" H 6150 4350 50  0001 C CNN
+	1    6150 4350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR06
+U 1 1 5EAF2C6A
+P 7450 4350
+F 0 "#PWR06" H 7450 4100 50  0001 C CNN
+F 1 "GND" H 7455 4177 50  0000 C CNN
+F 2 "" H 7450 4350 50  0001 C CNN
+F 3 "" H 7450 4350 50  0001 C CNN
+	1    7450 4350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7450 4200 7450 4350
+Wire Wire Line
+	6150 4200 6150 4350
+$Comp
+L Diode:SD05_SOD323 D2
+U 1 1 5EAF377E
+P 8050 4050
+F 0 "D2" V 8004 4129 50  0000 L CNN
+F 1 "1.5ke18" V 8095 4129 50  0000 L CNN
+F 2 "Diode_SMD:D_SOD-323" H 8050 3850 50  0001 C CNN
+F 3 "https://www.littelfuse.com/~/media/electronics/datasheets/tvs_diode_arrays/littelfuse_tvs_diode_array_sd_c_datasheet.pdf.pdf" H 8050 4050 50  0001 C CNN
+	1    8050 4050
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	7850 3700 8050 3700
+Wire Wire Line
+	8050 3700 8050 3900
+$Comp
+L power:GND #PWR07
+U 1 1 5EAF4530
+P 8050 4350
+F 0 "#PWR07" H 8050 4100 50  0001 C CNN
+F 1 "GND" H 8055 4177 50  0000 C CNN
+F 2 "" H 8050 4350 50  0001 C CNN
+F 3 "" H 8050 4350 50  0001 C CNN
+	1    8050 4350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8050 4200 8050 4350
+$Comp
+L Device:R R5
+U 1 1 5EAF4F19
+P 6950 4300
+F 0 "R5" H 7020 4346 50  0000 L CNN
+F 1 "390" H 7020 4255 50  0000 L CNN
+F 2 "" V 6880 4300 50  0001 C CNN
+F 3 "~" H 6950 4300 50  0001 C CNN
+	1    6950 4300
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR05
+U 1 1 5EAF58EA
+P 6950 4550
+F 0 "#PWR05" H 6950 4300 50  0001 C CNN
+F 1 "GND" H 6955 4377 50  0000 C CNN
+F 2 "" H 6950 4550 50  0001 C CNN
+F 3 "" H 6950 4550 50  0001 C CNN
+	1    6950 4550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6950 4000 6950 4100
+Wire Wire Line
+	6950 4450 6950 4550
+$Comp
+L Device:R R4
+U 1 1 5EAF6072
+P 6500 3950
+F 0 "R4" H 6430 3904 50  0000 R CNN
+F 1 "240" H 6430 3995 50  0000 R CNN
+F 2 "" V 6430 3950 50  0001 C CNN
+F 3 "~" H 6500 3950 50  0001 C CNN
+	1    6500 3950
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	6500 4100 6950 4100
+Connection ~ 6950 4100
+Wire Wire Line
+	6950 4100 6950 4150
+Wire Wire Line
+	6500 3800 6500 3700
+Connection ~ 6500 3700
+Wire Wire Line
+	2150 3250 2600 3250
+Wire Wire Line
+	2600 3450 2600 3250
+Connection ~ 2600 3250
+Wire Wire Line
+	2600 3250 3000 3250
+$Comp
+L Connector:Screw_Terminal_01x02 J1
+U 1 1 5EB0B258
+P 8650 3700
+F 0 "J1" H 8730 3692 50  0000 L CNN
+F 1 "Screw_Terminal_01x02" H 8730 3601 50  0000 L CNN
+F 2 "" H 8650 3700 50  0001 C CNN
+F 3 "~" H 8650 3700 50  0001 C CNN
+	1    8650 3700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8050 3700 8450 3700
+Connection ~ 8050 3700
+$Comp
+L power:GND #PWR08
+U 1 1 5EB0D780
+P 8450 4350
+F 0 "#PWR08" H 8450 4100 50  0001 C CNN
+F 1 "GND" H 8455 4177 50  0000 C CNN
+F 2 "" H 8450 4350 50  0001 C CNN
+F 3 "" H 8450 4350 50  0001 C CNN
+	1    8450 4350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8450 3800 8450 4350
+Wire Wire Line
+	6150 3700 5650 3700
+Wire Wire Line
+	5200 3800 5200 3900
+$Comp
+L Device:R R3
+U 1 1 5EAFCC2E
+P 5650 3850
+F 0 "R3" H 5720 3896 50  0000 L CNN
+F 1 "10k" H 5720 3805 50  0000 L CNN
+F 2 "" V 5580 3850 50  0001 C CNN
+F 3 "~" H 5650 3850 50  0001 C CNN
+	1    5650 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5200 3900 5400 3900
+Wire Wire Line
+	6150 3900 6150 3700
+$Comp
+L power:GND #PWR03
+U 1 1 5EAFDED2
+P 5650 4550
+F 0 "#PWR03" H 5650 4300 50  0001 C CNN
+F 1 "GND" H 5655 4377 50  0000 C CNN
+F 2 "" H 5650 4550 50  0001 C CNN
+F 3 "" H 5650 4550 50  0001 C CNN
+	1    5650 4550
+	1    0    0    -1  
+$EndComp
+Connection ~ 5200 3900
+Wire Wire Line
+	5400 4100 5650 4100
+Wire Wire Line
+	6500 3700 6150 3700
+Connection ~ 6150 3700
+Wire Wire Line
+	5400 3900 5400 4100
+Wire Wire Line
+	5650 4400 5650 4550
+Connection ~ 5200 3700
+Wire Wire Line
+	5650 3700 5200 3700
+Wire Wire Line
+	5200 3700 5200 3250
+$Comp
+L Device:C C1
+U 1 1 5EAFD5D9
+P 5650 4250
+F 0 "C1" H 5765 4296 50  0000 L CNN
+F 1 ".1uf" H 5765 4205 50  0000 L CNN
+F 2 "" H 5688 4100 50  0001 C CNN
+F 3 "~" H 5650 4250 50  0001 C CNN
+	1    5650 4250
+	1    0    0    -1  
+$EndComp
+Connection ~ 5650 3700
+Wire Wire Line
+	5650 4000 5650 4100
+Connection ~ 5650 4100
+NoConn ~ 5200 4000
+NoConn ~ 3300 3700
+$Comp
+L Device:R R2
+U 1 1 5EB31A76
+P 3000 3600
+F 0 "R2" H 3070 3646 50  0000 L CNN
+F 1 "10k" H 3070 3555 50  0000 L CNN
+F 2 "" V 2930 3600 50  0001 C CNN
+F 3 "~" H 3000 3600 50  0001 C CNN
+	1    3000 3600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3000 3450 3000 3250
+Connection ~ 3000 3250
+Wire Wire Line
+	3000 3250 5200 3250
+Wire Wire Line
+	3000 3750 3000 3800
+Wire Wire Line
+	3000 3800 3300 3800
+$EndSCHEMATC
