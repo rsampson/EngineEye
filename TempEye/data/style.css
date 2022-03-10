@@ -5,19 +5,24 @@
     box-sizing: border-box;
 }
 
-.grid-container {
-  display: grid;
-  grid-gap: 5px;
-  grid-template-columns: auto;
-  padding: 5px;
+*/
+.temp-text {
+
+}
+*/
+
+.flex-container {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column ;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 10px;
 }
 
-.grid-item {
+.flex-container > div {
   border: 1px solid rgba(0, 0, 0, 0.8);
   border-radius: 10px;
-  padding: 5px;
-  font-size: 20px;
   text-align: center;
+  margin: 5px 5px 5px 5px;
 }
-
-

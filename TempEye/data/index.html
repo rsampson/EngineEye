@@ -5,6 +5,7 @@
     <!--Engine Temperature Monitor HTML-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engine Parameters</title>
+    <!--link rel="stylesheet" type="text/css" href="/home/richard/Desktop/EngineEye/TempEye/data/style.css"-->
     <link rel="stylesheet" type="text/css" href="style.css">
     <link rel="stylesheet" type="text/css" href="Chart.min.css">
     <script src="Chart.min.js.gz"></script>
@@ -139,16 +140,18 @@
             var today = new Date();
             var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
 
-            // slow down chart update
-            if (count % 10 == 0) {
-                addData(t, data.temp2); // audible alarm if too hot
+            // Update chart 
+            if (count % 10 == 0) { // slow down chart update
+                addData(t, data.temp2); 
+                // console.log("Added %d to chart");
                 if (data.temp2 > TOOHOT) {
                     beep(999, 200, 200);
                     beep(999, 601, 200);
                 }
             }
             count++;
-
+            
+            // update meter
             gauge.set(data.temp2);
 
             // turn out of range text red
@@ -163,15 +166,15 @@
 </head>
 
 <body onload="javascript:init()" onbeforeunload="return closesocket()">
-    <div class="main_block grid-container">
+    <div class="main_block flex-container">
 
-        <div class="gauge grid-item">
+        <div class="gauge flex-item">
            <h1>Oil Temp</h1>
            <h1><span class="temp-text" id="textfield" >70</span> F </h1>
            <canvas id="temp-gauge" width="auto" height="auto"></canvas>
         </div>
 
-        <div class="chart grid-item">
+        <div class="chart flex-item">
             <canvas id="line-chart" width="auto" height="300px"></canvas>
         </div>
 
