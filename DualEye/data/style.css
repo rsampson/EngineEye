@@ -1,0 +1,28 @@
+.main_block {
+    background-color: white;
+    font-family: Arial;
+    margin-left: 5%;
+    box-sizing: border-box;
+}
+
+*/
+.temp-text {
+
+}
+*/
+
+.flex-container {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column ;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 10px;
+}
+
+.flex-container > div {
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  text-align: center;
+  margin: 5px 5px 5px 5px;
+}

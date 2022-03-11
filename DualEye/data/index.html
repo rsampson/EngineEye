@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!--Engine Temperature Monitor HTML-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Parameters</title>
+    <!--link rel="stylesheet" type="text/css" href="/home/richard/Desktop/EngineEye/TempEye/data/style.css"-->
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="Chart.min.css">
+    <script src="Chart.min.js.gz"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>-->
+    <script src="gauge.min.js"></script>
+    
+    <script type="text/javascript">
+        const TOOHOT = 245;
+
+        a = new AudioContext()
+
+        function beep(vol, freq, duration) { // for audible alarm
+            v = a.createOscillator()
+            u = a.createGain()
+            v.connect(u)
+            v.frequency.value = freq
+            v.type = "square"
+            u.connect(a.destination)
+            u.gain.value = vol * 0.01
+            v.start(a.currentTime)
+            v.stop(a.currentTime + duration * 0.001)
+        }
+
+
+        function hotText(elemID, level) {
+            var tempelem = document.getElementById(elemID);
+            var tempnum = parseInt(tempelem.innerHTML, 10);
+
+            if (tempnum > level) {
+                tempelem.style.color = "red";
+            } else {
+                tempelem.style.color = "black";
+            }
+        }
+
+        //var webSocket, dataPlot, gauge;
+        //var maxDataPoints = 20;
+
+        //function removeData() {
+            //dataPlot.data.labels.shift();
+            //dataPlot.data.datasets[0].data.shift();
+        //}
+
+        //function addData(label, data0, data1) {
+            //if (dataPlot.data.labels.length > maxDataPoints) removeData();
+            //dataPlot.data.labels.push(label);
+            //dataPlot.data.datasets[0].data.push(data0);
+            //dataPlot.update();
+        //}
+
+        function init() {
+            webSocket = new WebSocket('ws://' + window.location.hostname + ':81/');
+            webSocket.onmessage = function(event) {
+                processReceivedCommand(event);
+            };
+            //// Chart from: https://github.com/chartjs/Chart.js
+            //dataPlot = new Chart(document.getElementById("line-chart"), {
+                //type: 'line',
+                //data: {
+                    //labels: [],
+                    //datasets: [{
+                        //data: [],
+                        //label: "temp",
+                        //yAxisID: 'A',
+                        //borderColor: "#3e95cd",
+                        //fill: false
+                    //}]
+                //},
+                //options: {
+                    //responsive: true,
+                    //maintainAspectRatio: false,
+                    //legend: {
+                        //display: false
+                    //},
+                    //scales: {
+                        //yAxes: [{
+                            //id: 'A',
+                            //type: 'linear',
+                            //position: 'left',
+                            //ticks: {
+                                //fontColor: "#3e95cd",
+                                //max: HIGHSCALE,
+                                //min: LOWSCALE
+                            //}
+                        //}]
+                    //}
+                //}
+            //});
+
+            var opts = {
+                angle: 0.07, // The span of the gauge arc
+                lineWidth: 0.2, // The line thickness
+                radiusScale: .8, // Relative radius
+                pointer: {
+                    length: 0.65, // // Relative to gauge radius
+                    strokeWidth: 0.066, // The thickness
+                    color: '#000000' // Fill color
+                },
+                limitMax: true, // If false, max value increases automatically if value > maxValue
+                limitMin: true, // If true, the min value of the gauge will be fixed
+                colorStart: '#6FADCF', // Colors
+                colorStop: '#8FC0DA', // just experiment with them
+                strokeColor: '#E0E0E0', // to see which ones work best for you
+                generateGradient: true,
+                highDpiSupport: true, // High resolution support
+
+                percentColors: [
+                    [0.0, "#35e50b"],
+                    [0.60, "#f9e602"],
+                    [1.0, "#ff0000"]
+                ]
+            };
+
+            // Gauge from: https://bernii.github.io/gauge.js/
+            var gaugetarget = document.getElementById('temp-gauge'); // canvas element
+            gauge = new Gauge(gaugetarget).setOptions(opts); // create gauge!
+            gauge.maxValue = 270; // set max gauge value
+            gauge.setMinValue(70); // Prefer setter over gauge.minValue = 0
+            gauge.setTextField(document.getElementById("textfield"));
+         
+            var rpmtarget = document.getElementById('rpm-gauge'); // canvas element
+            rpmgauge = new Gauge(rpmtarget).setOptions(opts); // create gauge!
+            rpmgauge.maxValue = 5000; // set max gauge value
+            rpmgauge.setMinValue(100); // Prefer setter over gauge.minValue = 0
+            rpmgauge.setTextField(document.getElementById("rpmfield"));
+       
+        }
+
+        var count = 0;
+
+        function processReceivedCommand(evt) {
+            var data = JSON.parse(evt.data);
+            // update display values
+            var today = new Date();
+            var t = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+
+            // Update chart 
+            if (count % 10 == 0) { // slow down chart update
+                // addData(t, data.temp2); 
+                // console.log("Added %d to chart");
+                if (data.temp2 > TOOHOT) {
+                    beep(999, 200, 200);
+                    beep(999, 601, 200);
+                }
+            }
+            count++;
+            
+            // update meters
+            gauge.set(data.temp);
+            rpmgauge.set(data.rpm);
+            
+            // turn out of range text red
+            hotText("textfield", TOOHOT);
+        }
+
+        function closesocket() {
+            webSocket.close();
+        }
+
+    </script>
+</head>
+
+<body onload="javascript:init()" onbeforeunload="return closesocket()">
+    <div class="main_block flex-container">
+
+        <div class="gauge flex-item">
+           <h1>Oil Temp</h1>
+           <h1><span class="temp-text" id="textfield" >70</span> F </h1>
+           <canvas id="temp-gauge" width="auto" height="auto"></canvas>
+        </div>
+        
+        <div class="rpmgauge flex-item">
+           <h1>RPM</h1>
+           <h1><span class="temp-text" id="rpmfield" >0</span> </h1>
+           <canvas id="rpm-gauge" width="auto" height="auto"></canvas>
+        </div>
+
+        <!--div class="chart flex-item">
+            <canvas id="line-chart" width="auto" height="300px"></canvas>
+        </div-->
+
+    </div>
+</body>
+
+</html>
